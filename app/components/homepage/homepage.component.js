@@ -12,6 +12,5 @@ angular.
 
     template: `
       <search></search>
-      <div class="container text-center">Home</div>
     `,
   });
