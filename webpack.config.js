@@ -15,12 +15,6 @@ var webpackConfig = {
     publicPath: path.join(__dirname, '/public'),
     filename: PRODUCTION ? '[name].bundle.min.js' : '[name].bundle.js'
   },
-  devServer: {
-    // This is required for older versions of webpack-dev-server
-    // if you use absolute 'to' paths. The path should be an
-    // absolute path to your build destination.
-    outputPath: path.join(__dirname, '/public')
-  },
 
 
   module: {
