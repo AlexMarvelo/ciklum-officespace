@@ -4,7 +4,7 @@ angular.
   module('search').
   component('search', {
     controller: ['$scope', 'Employees',
-      function NavbarCtrl($scope, Employees) {
+      function SearchCtrl($scope, Employees) {
         this.searchQuery = '';
 
         this.employees = [];

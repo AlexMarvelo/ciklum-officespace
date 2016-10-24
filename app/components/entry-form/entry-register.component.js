@@ -5,7 +5,7 @@ angular.
   component('entryRegister', {
     controller: [
       '$log', '$scope', '$state', 'User', 'Notifications',
-      function EntryLoginCtrl($log, $scope, $state, User, Notifications) {
+      function EntryRegisterCtrl($log, $scope, $state, User, Notifications) {
         this.static = {
           formHeader: 'Sign up',
           btnText: 'Sign up',
