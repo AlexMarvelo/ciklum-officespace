@@ -21,6 +21,12 @@ body {
   background: #fc8300;
   border: none;
 }
+.navbar-toggle {
+  border-color: black;
+}
+.navbar-toggle .icon-bar {
+  background-color: black;
+}
 .navbar a {
   color: black;
 }
@@ -194,9 +200,11 @@ h1 {
   }
 }
 
+
 /*
 Animations
 */
+
 .notifier-alert-container {
   transition: 0.3s ease-out height, 0.3s ease-out opacity, 0.3s ease-out padding-top, 0.3s ease-out padding-bottom;
 }
