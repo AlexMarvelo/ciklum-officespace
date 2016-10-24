@@ -7,9 +7,13 @@ const utils = require('./utils');
 module.exports = function(app, passport) {
 
   // pages:
-  router.get('/', utils.isLoggedIn, (req, res) => {
+  router.get('/', (req, res) => {
     utils.renderApp(res);
   });
+
+  // router.get('/admin', utils.isLoggedIn, (req, res) => {
+  //   utils.renderApp(res);
+  // });
 
   router.get('/login', utils.isLoggedOut, (req, res) => {
     utils.renderApp(res);
