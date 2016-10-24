@@ -3,63 +3,14 @@
 angular.
   module('search').
   component('search', {
-    controller: [
-      function NavbarCtrl() {
+    controller: ['$scope', 'Employees',
+      function NavbarCtrl($scope, Employees) {
         this.searchQuery = '';
 
-        this.$onInit = () => {
-          this.employees = [{
-            'firstName': 'Alexey',
-            'lastName': 'Mironenko',
-            'email': 'mironenkoalexey@gmail.com',
-            'userID': 'asd1'
-          }, {
-            'firstName': 'Yana',
-            'lastName': 'Ripenko',
-            'email': 'yanaripenko@gmail.com',
-            'userID': 'asd2'
-          }, {
-            'firstName': 'Anya',
-            'lastName': 'Panasyuk',
-            'email': 'anyapanasyuk@gmail.com',
-            'userID': 'asd3'
-          }, {
-            'firstName': 'Egor',
-            'lastName': 'Gangalo',
-            'email': 'egorgangalo@gmail.com',
-            'userID': 'asd4'
-          }, {
-            'firstName': 'Krus',
-            'lastName': 'Krus',
-            'email': 'krus@gmail.com',
-            'userID': 'asd5'
-          }, {
-            'firstName': 'Maria',
-            'lastName': 'Kozlova',
-            'email': 'mariakozlova@gmail.com',
-            'userID': 'asd6'
-          }, {
-            'firstName': 'David',
-            'lastName': 'Bogdan',
-            'email': 'davidbogdan@gmail.com',
-            'userID': 'asd7'
-          }, {
-            'firstName': 'Alexey',
-            'lastName': 'Bondar',
-            'email': 'alexeybondar@gmail.com',
-            'userID': 'asd8'
-          }, {
-            'firstName': 'Alexander',
-            'lastName': 'Rak',
-            'email': 'alexanderrak@gmail.com',
-            'userID': 'asd9'
-          }, {
-            'firstName': 'Andrew',
-            'lastName': 'Sklyar',
-            'email': 'andrewsklyar@gmail.com',
-            'userID': 'asd10'
-          }];
-        };
+        this.employees = [];
+        $scope.$watch(Employees.get, employees => {
+          this.employees = employees;
+        });
 
         this.onSearchSubmit = (event) => {
           event.preventDefault();
@@ -71,7 +22,7 @@ angular.
 
         this.nameSearch = (employee) => {
           return employee.firstName.toLowerCase().indexOf(this.searchQuery.toLowerCase()) != -1 ||
-                 employee.lastName.toLowerCase().indexOf(this.searchQuery.toLowerCase()) != -1;
+                  employee.lastName.toLowerCase().indexOf(this.searchQuery.toLowerCase()) != -1;
         };
       }
     ],
