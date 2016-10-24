@@ -5,7 +5,7 @@ angular.
   factory('User', [
     '$state', '$log', '$resource', 'localStorageService', 'CONFIG',
     function($state, $log, $resource, localStorageService, CONFIG) {
-      const serverRequest = $resource(`${CONFIG.appDomain}/user/:action`, {action: 'get'}, {
+      const serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/user/:action`, {action: 'get'}, {
         get: {
           method: 'GET',
           params: {

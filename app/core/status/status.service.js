@@ -4,7 +4,7 @@ angular.
   module('core.status').
   factory('Status', ['$resource', 'CONFIG',
     ($resource, CONFIG) => {
-      const serverRequest = $resource(`${CONFIG.appDomain}/status/:action`, {action: 'dbconnection'}, {
+      const serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/status/:action`, {action: 'dbconnection'}, {
         dbconnection: {
           method: 'GET',
           params: {

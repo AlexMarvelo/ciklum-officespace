@@ -1,6 +1,6 @@
 'use strict';
 
-require('../node_modules/angular/angular.min');
+require('../node_modules/angular/angular');
 
 // Import styles
 require('../node_modules/bootstrap/dist/css/bootstrap.css');
