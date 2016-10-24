@@ -48,7 +48,7 @@ angular.
     ],
 
     template: `
-      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <nav class="navbar navbar-fixed-top" role="navigation">
         <div class="container">
           <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
@@ -57,7 +57,12 @@ angular.
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" ui-sref="{{$ctrl.static.homeBtn.state}}">{{$ctrl.static.homeBtn.title}}</a>
+            <a class="navbar-brand navbar-brand-logo" ui-sref="{{$ctrl.static.homeBtn.state}}">
+              <img ng-src="/images/favicon.ico" alt="{{$ctrl.static.homeBtn.title}}">
+            </a>
+            <a class="navbar-brand" ui-sref="{{$ctrl.static.homeBtn.state}}">
+              {{$ctrl.static.homeBtn.title}}
+            </a>
           </div>
           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
