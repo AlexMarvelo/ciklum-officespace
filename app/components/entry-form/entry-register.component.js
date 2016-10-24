@@ -38,9 +38,9 @@ angular.
         <div class="col-sm-4 col-sm-push-4 text-center">
           <form action="/user/signup" method="post" class="entry-form" ng-submit="$ctrl.signup($event)">
             <h2>{{$ctrl.static.formHeader}}</h2>
-            <div class="input-group">
+            <div class="form-group">
               <input name="email" ng-model="email" type="email" class="form-control" placeholder="Email" tabindex="1">
-              <input name="password"type="password" ng-model="password" class="form-control" placeholder="Password" tabindex="2">
+              <input name="password" type="password" ng-model="password" class="form-control" placeholder="Password" tabindex="2">
             </div>
             <button type="submit" class="btn btn-default" tabindex="3">{{$ctrl.static.btnText}}</button>
           </form>

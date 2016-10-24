@@ -3,16 +3,25 @@ var PRODUCTION = false;
 var webpack = require('webpack');
 var path = require('path');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var CopyWebpackPlugin = require('copy-webpack-plugin');
 
 var webpackConfig = {
   entry: {
-    app: [__dirname + '/app/app.module.js']
+    app: [ path.join(__dirname, '/app/app.module.js') ]
   },
+  context: path.join(__dirname, '/'),
   output: {
-    path: __dirname + '/public',
-    // publicPath: '/public',
+    path: path.join(__dirname, '/public'),
+    publicPath: path.join(__dirname, '/public'),
     filename: PRODUCTION ? '[name].bundle.min.js' : '[name].bundle.js'
   },
+  devServer: {
+    // This is required for older versions of webpack-dev-server
+    // if you use absolute 'to' paths. The path should be an
+    // absolute path to your build destination.
+    outputPath: path.join(__dirname, '/public')
+  },
+
 
   module: {
     loaders: [
@@ -40,7 +49,10 @@ var webpackConfig = {
     ]
   },
   plugins: [
-    new ExtractTextPlugin('styles.bundle.css')
+    new ExtractTextPlugin('styles.bundle.css'),
+    new CopyWebpackPlugin([
+      { from: 'assets/images/favicon.ico', to: 'images' }
+    ])
   ],
   eslint: {
     configFile: '.eslintrc'

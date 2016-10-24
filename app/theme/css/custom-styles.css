@@ -8,6 +8,15 @@ body {
     padding-top: 70px; /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
 }
 
+.btn:focus,
+.btn:active:focus,
+.btn.active:focus,
+.btn.focus,
+.btn:active.focus,
+.btn.active.focus {
+  outline: none;
+}
+
 .navbar {
   background: #fc8300;
   border: none;
@@ -108,11 +117,10 @@ h1 {
   margin-top: 15px;
 }
 
-.entry-form .input-group {
-  margin: 0 auto;
+.entry-form .form-group input{
+  max-width: 250px;
+  margin: 0 auto 15px;
 }
-
-.entry-form .input-group input,
 .entry-form .btn {
   margin-bottom: 10px;
 }

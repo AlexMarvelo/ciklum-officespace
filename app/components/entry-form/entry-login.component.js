@@ -34,9 +34,9 @@ angular.
         <div class="col-sm-4 col-sm-push-4 text-center">
           <form action="/user/login" method="post" class="entry-form" autocomplete="on" ng-submit="$ctrl.login($event)">
             <h2>{{$ctrl.static.formHeader}}</h2>
-            <div class="input-group">
-              <input name="email" ng-model="email" type="text" class="form-control" placeholder="Email" tabindex="1" aria-describedby="basic-addon1">
-              <input name="password" ng-model="password" type="password" class="form-control" placeholder="Password" tabindex="2" aria-describedby="basic-addon2">
+            <div class="form-group">
+              <input name="email" ng-model="email" type="text" class="form-control" placeholder="Email" tabindex="1">
+              <input name="password" type="password" ng-model="password" class="form-control" placeholder="Password" tabindex="2">
             </div>
             <button type="submit" class="btn btn-default" tabindex="3">{{$ctrl.static.btnText}}</button>
           </form>
