@@ -13,7 +13,7 @@ const dbConfig = require('./db/db.config.json');
 const flash = require('connect-flash');
 
 const app = express();
-app.set('env', 'production');
+app.set('env', 'development');
 
 require('./db/db')(app);
 
