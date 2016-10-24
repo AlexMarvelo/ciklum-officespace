@@ -1,4 +1,4 @@
-var PRODUCTION = false;
+var PRODUCTION = true;
 
 var webpack = require('webpack');
 var path = require('path');
@@ -14,12 +14,6 @@ var webpackConfig = {
     path: path.join(__dirname, '/public'),
     publicPath: path.join(__dirname, '/public'),
     filename: PRODUCTION ? '[name].bundle.min.js' : '[name].bundle.js'
-  },
-  devServer: {
-    // This is required for older versions of webpack-dev-server
-    // if you use absolute 'to' paths. The path should be an
-    // absolute path to your build destination.
-    outputPath: path.join(__dirname, '/public')
   },
 
 
@@ -49,7 +43,7 @@ var webpackConfig = {
     ]
   },
   plugins: [
-    new ExtractTextPlugin('styles.bundle.css'),
+    new ExtractTextPlugin(PRODUCTION ? 'styles.bundle.min.css' : 'styles.bundle.css'),
     new CopyWebpackPlugin([
       { from: 'assets/images/favicon.ico', to: 'images' }
     ])

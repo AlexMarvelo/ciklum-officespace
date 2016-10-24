@@ -9,7 +9,7 @@
     "build-watch": "webpack --progress --colors --watch",
     "start-server-watch": "nodemon ./bin/www",
     "start-server": "node ./bin/www",
-    "start": "npm run build && npm run start-server"
+    "start": "npm run start-server"
   },
   "author": "Alexey <mironenkoalexey@gmail.com>",
   "repository": {
