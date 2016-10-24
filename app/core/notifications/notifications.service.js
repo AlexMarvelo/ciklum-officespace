@@ -14,6 +14,7 @@ angular.
         notFound: 404,
         serverError: 500,
         dbNotConnected: 503,
+        svgNotSupported: 420,
       };
       const disabled = ['success'];
 
@@ -77,6 +78,13 @@ angular.
             msg: 'The request could not be understood by the server',
             type: 'danger',
             code: codes.badRequest
+          };
+          break;
+        case codes.svgNotSupported:
+          newNotification = {
+            msg: 'SVG drowing is not supported',
+            type: 'danger',
+            code: codes.svgNotSupported
           };
           break;
         }

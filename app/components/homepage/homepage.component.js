@@ -12,5 +12,6 @@ angular.
 
     template: `
       <search></search>
+      <mapcanvas></mapcanvas>
     `,
   });
