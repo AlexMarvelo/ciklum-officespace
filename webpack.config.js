@@ -45,7 +45,7 @@ var webpackConfig = {
   plugins: [
     new ExtractTextPlugin('styles.bundle.css'),
     new CopyWebpackPlugin([
-      { from: 'assets/images/favicon.ico', to: 'images' }
+      { from: 'assets/images', to: 'images' }
     ])
   ],
   eslint: {
