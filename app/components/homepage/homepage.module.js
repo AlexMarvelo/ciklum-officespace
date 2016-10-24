@@ -1,5 +1,9 @@
 'use strict';
 
-angular.module('homepage', []);
+require('../search/search.module');
+
+angular.module('homepage', [
+  'search'
+]);
 
 require('./homepage.component');

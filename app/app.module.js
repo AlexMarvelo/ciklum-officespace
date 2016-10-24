@@ -4,7 +4,7 @@ require('../node_modules/angular/angular');
 
 // Import styles
 require('../node_modules/bootstrap/dist/css/bootstrap.css');
-require('./theme/css/custom-styles.css');
+require('./theme/styles/custom-styles.sass');
 
 window.jQuery = require('jquery');
 require('../node_modules/bootstrap/dist/js/bootstrap.js');
