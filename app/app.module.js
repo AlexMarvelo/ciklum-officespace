@@ -14,11 +14,10 @@ require('./core/core.module');
 require('./components/navbar/navbar.module');
 require('./components/notifier/notifier.module');
 require('./components/entry-form/entry-form.module');
-require('./components/movies-block/movies-block.module');
-require('./components/movie-details/movie-details.module');
+require('./components/homepage/homepage.module');
 
 // Declare app level module which depends on views, and components
-angular.module('OMDbHero', [
+angular.module('CiklumSpace', [
   require('angular-ui-router'),
   require('angular-local-storage'),
   require('angular-animate'),
@@ -26,10 +25,9 @@ angular.module('OMDbHero', [
   'navbar',
   'notifier',
   'entryForm',
-  'moviesBlock',
-  'movieDetails'
+  'homepage'
 ]);
 
 require('./app.config');
 
-angular.bootstrap(document, ['OMDbHero']);
+angular.bootstrap(document, ['CiklumSpace']);

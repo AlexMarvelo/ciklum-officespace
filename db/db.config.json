@@ -1,6 +1,6 @@
 {
   "url_local":  "mongodb://localhost/ciklumspace",
-  "url_remote": "mongodb://dbadmin:dbadmin@ds061196.mlab.com:61196/ciklumspace",
+  "url_remote": "",
   "optioins": {},
   "reconnectInterval": 2000
 }

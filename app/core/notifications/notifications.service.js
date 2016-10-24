@@ -8,8 +8,6 @@ angular.
       const timeout = 4000;
       const codes = {
         success: 200,
-        noContent: 204,
-        remoteSourse: 207,
         badRequest: 400,
         unauthorized: 401,
         nopermission: 403,
@@ -17,7 +15,7 @@ angular.
         serverError: 500,
         dbNotConnected: 503,
       };
-      const disabled = ['success', 'remoteSourse'];
+      const disabled = ['success'];
 
       this.notifications = [];
       this.notificationsLog = [];
@@ -37,20 +35,6 @@ angular.
             msg: 'Connection to local database failed. Remote one will be used',
             type: 'warning',
             code: codes.dbNotConnected
-          };
-          break;
-        case codes.noContent:
-          newNotification = {
-            msg: 'No movies were found, sorry',
-            type: 'danger',
-            code: codes.noContent
-          };
-          break;
-        case codes.remoteSourse:
-          newNotification = {
-            msg: 'No results from local database, remote one was used',
-            type: 'info',
-            code: codes.remoteSourse
           };
           break;
         case codes.unauthorized:

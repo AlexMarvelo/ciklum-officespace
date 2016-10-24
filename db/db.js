@@ -3,7 +3,6 @@
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 const dbConfig = require('./db.config.json');
-const initDB = require('./initDB');
 const db = mongoose.connection;
 
 module.exports = (app) => {
@@ -44,3 +43,18 @@ module.exports = (app) => {
     getDBconnection
   };
 };
+
+function initDB() {
+  // Movie.find({}).exec()
+  //   .then(movies => movies.length)
+  //   .then(amount => {
+  //     if (amount) return;
+  //     data.input.forEach(movieData => {
+  //       let movie = new Movie(movieData);
+  //       movie.save()
+  //         .catch(error => { throw error; });
+  //     });
+  //     console.log('- DB initialized successfully');
+  //   })
+  //   .catch(error => { throw error; });
+}

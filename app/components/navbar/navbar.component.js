@@ -3,8 +3,8 @@
 angular.
   module('navbar').
   component('navbar', {
-    controller: ['$scope', '$state', '$log', 'CONFIG', 'User', 'Movies',
-      function NavbarCtrl($scope, $state, $log, CONFIG, User, Movies) {
+    controller: ['$scope', '$state', '$log', 'CONFIG', 'User',
+      function NavbarCtrl($scope, $state, $log, CONFIG, User) {
         this.static = {
           homeBtn: {
             link: '/',
@@ -41,7 +41,6 @@ angular.
           User.serverRequest.logout(() => {
             $log.debug('- logged out');
             User.clear();
-            Movies.resetCurrentView();
             $state.go('login');
           });
         };
