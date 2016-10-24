@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 const dbConfig = require('./db.config.json');
 const db = mongoose.connection;
+const Employee = require('../models/employee');
+const initData = require('./db.initData.json');
 
 module.exports = (app) => {
   if (app) {
@@ -45,16 +47,16 @@ module.exports = (app) => {
 };
 
 function initDB() {
-  // Movie.find({}).exec()
-  //   .then(movies => movies.length)
-  //   .then(amount => {
-  //     if (amount) return;
-  //     data.input.forEach(movieData => {
-  //       let movie = new Movie(movieData);
-  //       movie.save()
-  //         .catch(error => { throw error; });
-  //     });
-  //     console.log('- DB initialized successfully');
-  //   })
-  //   .catch(error => { throw error; });
+  Employee.find({}).exec()
+    .then(employees => employees.length)
+    .then(amount => {
+      if (amount) return;
+      initData.input.forEach(employeeData => {
+        let employee = new Employee(employeeData);
+        employee.save()
+          .catch(error => { throw error; });
+      });
+      console.log('- DB initialized successfully');
+    })
+    .catch(error => { throw error; });
 }
