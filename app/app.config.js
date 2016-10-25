@@ -17,6 +17,11 @@ angular
           url: '/',
           template: '<homepage></homepage>'
         });
+        $stateProvider.state({
+          name: 'floor',
+          url: '/floor/:floorID',
+          template: '<floor></floor>'
+        });
         // $stateProvider.state({
         //   name: 'admin',
         //   url: '/admin',

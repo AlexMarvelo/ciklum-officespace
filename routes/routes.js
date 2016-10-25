@@ -11,6 +11,10 @@ module.exports = function(app, passport) {
     utils.renderApp(res);
   });
 
+  router.get('/floor/:floorID', (req, res) => {
+    utils.renderApp(res);
+  });
+
   // router.get('/admin', utils.isLoggedIn, (req, res) => {
   //   utils.renderApp(res);
   // });

@@ -16,6 +16,7 @@ require('./components/navbar/navbar.module');
 require('./components/notifier/notifier.module');
 require('./components/entry-form/entry-form.module');
 require('./components/homepage/homepage.module');
+require('./components/floor/floor.module');
 
 // Declare app level module which depends on views, and components
 angular.module('CiklumSpace', [
@@ -26,7 +27,8 @@ angular.module('CiklumSpace', [
   'navbar',
   'notifier',
   'entryForm',
-  'homepage'
+  'homepage',
+  'floor',
 ]);
 
 require('./app.config');

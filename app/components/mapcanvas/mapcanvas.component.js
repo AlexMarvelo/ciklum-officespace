@@ -5,9 +5,9 @@ const Mapcanvas = require('./mapcanvas.core');
 angular.
   module('mapcanvas').
   component('mapcanvas', {
-    controller: ['$scope', '$log', 'Notifications', 'User', 'Floor',
-      function MapCanvasCtrl($scope, $log, Notifications, User, Floor) {
-        const floorID = 'floor19';
+    controller: ['$scope', '$log', '$stateParams', 'Notifications', 'User', 'Floor',
+      function MapCanvasCtrl($scope, $log, $stateParams, Notifications, User, Floor) {
+        const floorID = $stateParams.floorID;
         // Floor(floorID).cleanSeats();
 
         const mapcanvas = new Mapcanvas($scope, $log, floorID, {

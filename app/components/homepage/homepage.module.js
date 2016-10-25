@@ -1,11 +1,5 @@
 'use strict';
 
-require('../search/search.module');
-require('../mapcanvas/mapcanvas.module');
-
-angular.module('homepage', [
-  'search',
-  'mapcanvas'
-]);
+angular.module('homepage', []);
 
 require('./homepage.component');
