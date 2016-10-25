@@ -1,23 +1,36 @@
 'use strict';
 
+const Mapcanvas = require('./mapcanvas.core');
+
 angular.
   module('mapcanvas').
   component('mapcanvas', {
-    controller: ['$log', 'Notifications',
-      function MapCanvasCtrl($log, Notifications) {
+    controller: ['$scope', '$log', 'Notifications', 'User', 'Floor',
+      function MapCanvasCtrl($scope, $log, Notifications, User, Floor) {
+        const floorID = 'floor19';
+        // Floor(floorID).cleanSeats();
+
+        const mapcanvas = new Mapcanvas($scope, $log, floorID, {
+          Notifications,
+          User,
+          Floor,
+        });
+
+
         this.$onInit = () => {
           if (!SVG.supported) {
             Notifications.add(Notifications.codes.svgNotSupported);
             $log.error('SVG not supported');
             return;
           }
-          // const container = document.getElementById('mapcanvas-container');
           const img = document.getElementById('mapcanvas-map');
           img.addEventListener('load', () => {
-            const draw = SVG('mapcanvas').size(img.width, img.height);
-            const rect = draw.rect(100, 100).attr({ fill: '#f06' });
+            mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
+            mapcanvas.setSeats(Floor(floorID).getSeats());
           });
         };
+
+
       }
     ],
 
