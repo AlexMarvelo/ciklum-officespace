@@ -5,17 +5,16 @@ const Mapcanvas = require('./mapcanvas.core');
 angular.
   module('mapcanvas').
   component('mapcanvas', {
-    controller: ['$scope', '$log', '$stateParams', 'Notifications', 'User', 'Floor',
-      function MapCanvasCtrl($scope, $log, $stateParams, Notifications, User, Floor) {
+    controller: ['$scope', '$log', '$stateParams', '$timeout', 'Notifications', 'User', 'Floor',
+      function MapCanvasCtrl($scope, $log, $stateParams, $timeout, Notifications, User, Floor) {
         const floorID = $stateParams.floorID;
         // Floor(floorID).cleanSeats();
 
-        const mapcanvas = new Mapcanvas($scope, $log, floorID, {
+        this.mapcanvas = new Mapcanvas($scope, $log, floorID, {
           Notifications,
           User,
           Floor,
         });
-
 
         this.$onInit = () => {
           if (!SVG.supported) {
@@ -25,14 +24,16 @@ angular.
           }
           const img = document.getElementById('mapcanvas-map');
           img.addEventListener('load', () => {
-            mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
-            mapcanvas.setSeats(Floor(floorID).getSeats());
+            this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
+            this.mapcanvas.setSeats(Floor(floorID).getSeats());
           });
         };
-
-
       }
     ],
+
+    bindings: {
+      mapcanvas: '<',
+    },
 
     template: `
       <div class="container">
@@ -45,5 +46,7 @@ angular.
           </div>
         </div>
       </div>
+
+      <modal mapcanvas="$ctrl.mapcanvas"></modal>
     `,
   });

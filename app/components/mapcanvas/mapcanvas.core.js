@@ -17,16 +17,21 @@ class Mapcanvas {
       distanceBetweenSeats: 23
     };
 
-    this.$scope.getActiveSeatID = () => this.$scope.activeSeatID;
+
     this.$scope.$watch(
-      $scope.getActiveSeatID,
+      () => this.$scope.activeSeatID,
       seatID => {
-        this.activeSeatID = seatID;
+        this.Floor(this.floorID).setActiveSeatID(seatID);
         this.seats.forEach(seat => {
-          if (seat.id != this.activeSeatID) seat.deactivate();
+          if (seat.id != seatID) seat.deactivate();
         });
       }
     );
+  }
+
+
+  deactivateAllSeats() {
+    this.seats.forEach(seat => seat.deactivate());
   }
 
 

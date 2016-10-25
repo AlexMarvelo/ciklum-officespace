@@ -50,6 +50,21 @@ angular.
       };
 
 
+
+      const getActiveSeat = () => this.activeSeat;
+
+
+      const setActiveSeatID = (seatID) => {
+        if (seatID) {
+          this.activeSeat = this.floors[this.floorID].seats.find(seat => seat.id == seatID);
+          $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${this.floorID}`);
+        } else {
+          this.activeSeat = undefined;
+          $log.debug(`- unset active seat on the floor ${this.floorID}`);
+        }
+      };
+
+
       return (floorID = 'floor19') => {
         this.floorID = floorID;
         return {
@@ -57,6 +72,8 @@ angular.
           getSeats,
           addSeat,
           cleanSeats,
+          getActiveSeat,
+          setActiveSeatID,
           serverRequest
         };
       };

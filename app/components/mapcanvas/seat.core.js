@@ -25,7 +25,6 @@ class Seat {
 
     this.svg.click((event) => {
       this.$scope.$apply(() => {
-        $scope.activeSeatID = this.id;
         event.preventDefault();
         this.onSelect();
       });
@@ -36,6 +35,7 @@ class Seat {
   onSelect() {
     if (this.active) {
       this.deactivate();
+      this.$scope.activeSeatID = undefined;
     } else {
       this.activate();
     }
@@ -44,6 +44,7 @@ class Seat {
 
   activate() {
     this.active = true;
+    this.$scope.activeSeatID = this.id;
     this.svg
       .addClass('seat--active')
       .animate(this.config.transitionDuration)

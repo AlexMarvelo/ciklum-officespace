@@ -2,10 +2,12 @@
 
 require('../search/search.module');
 require('../mapcanvas/mapcanvas.module');
+require('../modal/modal.module');
 
 angular.module('floor', [
   'search',
-  'mapcanvas'
+  'mapcanvas',
+  'modal'
 ]);
 
 require('./floor.component');

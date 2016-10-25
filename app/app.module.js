@@ -4,11 +4,13 @@ require('../node_modules/angular/angular');
 
 // Import styles
 require('../node_modules/bootstrap/dist/css/bootstrap.css');
+require('../node_modules/iziModal/css/iziModal.css');
 require('./theme/styles/custom-styles.sass');
 
 window.jQuery = require('jquery');
 window.SVG = require('svgjs');
 require('../node_modules/bootstrap/dist/js/bootstrap.js');
+require('../node_modules/iziModal/js/iziModal.js');
 
 // Import modules
 require('./core/core.module');
