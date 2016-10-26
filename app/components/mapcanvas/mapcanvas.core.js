@@ -27,6 +27,17 @@ class Mapcanvas {
         });
       }
     );
+
+    this.$scope.$watch(
+      this.User.getMode,
+      userMode => {
+        this.userMode = userMode;
+        switch (userMode) {
+        case 'draw':
+          break;
+        }
+      }
+    );
   }
 
 
@@ -50,8 +61,7 @@ class Mapcanvas {
       this.$scope.$apply(() => {
         event.preventDefault();
         const emptyPlaceClicked = event.target.id == this.draw.node.id;
-        if (!emptyPlaceClicked) return;
-        if (this.User.authorized()) this.addSeat({x: event.offsetX, y: event.offsetY});
+        if (emptyPlaceClicked && this.User.authorized() && this.userMode == 'draw') this.addSeat({x: event.offsetX, y: event.offsetY});
       });
     });
   }

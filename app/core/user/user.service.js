@@ -63,12 +63,24 @@ angular.
         localStorageService.set('user', this.user);
       };
 
+      const getMode = () => this.mode;
+      const setMode = mode => {
+        this.mode = mode;
+        if (this.mode) {
+          $log.debug(`- set user mode to ${this.mode}`);
+        } else {
+          $log.debug('- unset user mode');
+        }
+      };
+
       return {
         init,
         authorized,
         clear,
         get,
         set,
+        getMode,
+        setMode,
         serverRequest
       };
     }
