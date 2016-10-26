@@ -14,7 +14,7 @@ class Mapcanvas {
     this.seats = [];
 
     this.config = {
-      distanceBetweenSeats: 23
+      blockAreaRadius: 25
     };
 
 
@@ -34,7 +34,10 @@ class Mapcanvas {
         this.userMode = userMode;
         switch (userMode) {
         case 'draw':
+          if (this.draw) this.draw.addClass('mapcanvas-draw-mode');
           break;
+        default:
+          if (this.draw) this.draw.removeClass('mapcanvas-draw-mode');
         }
       }
     );
@@ -48,7 +51,13 @@ class Mapcanvas {
 
   setSeats(seats = []) {
     seats.forEach(seat => {
-      this.seats.push(new Seat(this.draw, this.$scope, {x: seat.x, y: seat.y}, seat.id));
+      this.seats.push(new Seat(
+        this.draw,
+        this.$scope,
+        {x: seat.x, y: seat.y},
+        seat.id,
+        seat.options
+      ));
     });
   }
 
@@ -69,22 +78,30 @@ class Mapcanvas {
 
   addSeat(coords = {x:0, y:0}, seatID = (new Date()).toISOString()) {
     const isTooClose = this.seats.find(seat => {
-      return Math.abs(seat.x - coords.x) < this.config.distanceBetweenSeats &&
-             Math.abs(seat.y - coords.y) < this.config.distanceBetweenSeats;
+      return Math.abs(seat.x - coords.x) < this.config.blockAreaRadius &&
+             Math.abs(seat.y - coords.y) < this.config.blockAreaRadius;
     }) != undefined;
     if (isTooClose) {
       this.Notifications.add(this.Notifications.codes.tooCloseSeat);
       return;
     }
 
-    let seat = new Seat(this.draw, this.$scope, coords, seatID);
+    let seat = new Seat(
+      this.draw,
+      this.$scope,
+      coords,
+      seatID,
+      {blockAreaRadius: this.config.blockAreaRadius}
+    );
     this.seats.push(seat);
     this.group.add(seat.svg);
     this.Floor(this.floorID).addSeat({
       x: seat.x,
       y: seat.y,
       id: seat.id,
+      options: {blockAreaRadius: this.config.blockAreaRadius},
       userID: seat.userID,
+      floorID: this.floorID,
     });
     return seat;
   }
