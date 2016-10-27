@@ -103,6 +103,7 @@ angular.
                   </div>
                 </div>
               </form>
+              <span class="modal-notification-msg"></span>
             `;
           };
           this.modal.html(getTemplate());
@@ -126,7 +127,7 @@ angular.
             const hasEmployee = this.seat.employeeID != undefined;
             const employee = this.getEmployee(this.seat.employeeID);
             return `
-              <form class="modal-form form-horizontal" autocomplete="off">
+              <form class="modal-form form-horizontal" autocomplete="off" novalidate>
                 <div class="form-group">
                   <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>
                   <div class="col-xs-8 col-thinpad-left">
@@ -173,7 +174,7 @@ angular.
                     </div>
                   </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group modal-form-group--last">
                   <div class="col-xs-6 col-thinpad-right">
                     <button type="button" id="modal-delete-btn" class="btn btn-danger modal-btn-control" tabindex="25">Delete</button>
                   </div>
@@ -182,6 +183,7 @@ angular.
                   </div>
                 </div>
               </form>
+              <span class="modal-notification-msg"></span>
               `;
           };
           this.modal.html(getTemplate());
@@ -210,6 +212,7 @@ angular.
           };
 
           const init = () => {
+            const self = this;
             const wrapper = this.modal.find('.iziModal-content');
             const form = wrapper.find('.modal-form');
             const deleteBtn = wrapper.find('#modal-delete-btn');
@@ -238,8 +241,27 @@ angular.
               employeeList.html('');
             });
 
+            this.modal.find('input[required]').keyup(function() {
+              if (this.value.length) self.removeNotification();
+            });
+
+            this.modal.find('.modal-notification-msg').click(() => {
+              this.removeNotification();
+            });
+
             form.submit(event => {
               event.preventDefault();
+              let valid = true;
+              this.modal.find('input[required]').each(function() {
+                if (!this.value.length) valid = false;
+              });
+              if (!valid) {
+                this.addNotification({
+                  status: 'ERROR',
+                  msg: 'Fill all required fields'
+                });
+                return;
+              }
               updateSeat();
             });
 
@@ -264,6 +286,39 @@ angular.
         this.getEmployee = (employeeID) => {
           return Employees.get().find(employee => employee.id == employeeID);
         };
+
+
+        this.setStatus = (status) => {
+          switch (status) {
+          case 'ERROR':
+            this.modal.addClass('modal-status--error');
+            break;
+          case 'NONE':
+            this.modal.removeClass('modal-status--error');
+            break;
+          }
+        };
+
+
+        this.addNotification = (notification) => {
+          const container = this.modal.find('.modal-notification-msg');
+          this.setStatus(notification.status);
+          container.html(notification.msg);
+          setTimeout(() => {
+            container.addClass('modal-notification-msg--active');
+          }, 300);
+        };
+
+
+        this.removeNotification = () => {
+          const container = this.modal.find('.modal-notification-msg');
+          container.removeClass('modal-notification-msg--active');
+          setTimeout(() => {
+            this.setStatus('NONE');
+            container.html('');
+          }, 300);
+
+        };
       }
     ],
 
@@ -273,7 +328,7 @@ angular.
 
     template: `
       <div class="modal-container">
-        <div id="modal" class="modal">
+        <div id="modal">
         </div>
       </div>
     `,
