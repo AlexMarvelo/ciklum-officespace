@@ -3,12 +3,11 @@
 const colors = require('../../config/colors.json');
 
 class Seat {
-  constructor(draw, $scope, coords = {x:0, y:0}, id = (new Date()).toISOString(), options = {}, userID) {
+  constructor(draw, $scope, coords = {x:0, y:0}, id = (new Date()).toISOString(), userID) {
     this.config = {
       radius: 8,
       strokeWidth: 8,
       transitionDuration: 200,
-      blockAreaRadius: options.blockAreaRadius || 25
     };
 
     this.$scope = $scope;
@@ -18,10 +17,6 @@ class Seat {
     this.active = false;
     this.userID = userID;
 
-    // this.blockArea = draw.circle(this.config.blockAreaRadius * 2)
-    //   .fill('transparent')
-    //   .center(this.x, this.y)
-    //   .addClass('seat-blockArea');
     this.svg = draw.circle(this.config.radius * 2)
       .fill(colors.themeSubcolor)
       .stroke({ color: colors.themeColor, opacity: 0.6, width: this.config.strokeWidth })

@@ -58,8 +58,7 @@ class Mapcanvas {
         this.draw,
         this.$scope,
         {x: seat.x, y: seat.y},
-        seat.id,
-        seat.options
+        seat.id
       ));
     });
   }
@@ -93,8 +92,7 @@ class Mapcanvas {
       this.draw,
       this.$scope,
       coords,
-      seatID,
-      {blockAreaRadius: this.config.blockAreaRadius}
+      seatID
     );
     this.seats.push(seat);
     this.group.add(seat.svg);
@@ -102,7 +100,6 @@ class Mapcanvas {
       x: seat.x,
       y: seat.y,
       id: seat.id,
-      options: {blockAreaRadius: this.config.blockAreaRadius},
       userID: seat.userID,
       floorID: this.floorID,
     });
