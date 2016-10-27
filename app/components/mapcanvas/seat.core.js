@@ -18,11 +18,11 @@ class Seat {
     this.active = false;
     this.userID = userID;
 
-    // this.blockArea = draw.nested().circle(this.config.blockAreaRadius * 2)
+    // this.blockArea = draw.circle(this.config.blockAreaRadius * 2)
     //   .fill('transparent')
     //   .center(this.x, this.y)
     //   .addClass('seat-blockArea');
-    this.svg = draw.nested().circle(this.config.radius * 2)
+    this.svg = draw.circle(this.config.radius * 2)
       .fill(colors.themeSubcolor)
       .stroke({ color: colors.themeColor, opacity: 0.6, width: this.config.strokeWidth })
       .center(this.x, this.y)
@@ -30,10 +30,8 @@ class Seat {
 
 
     this.svg.click((event) => {
-      this.$scope.$apply(() => {
-        event.preventDefault();
-        this.onSelect();
-      });
+      event.preventDefault();
+      this.onSelect();
     });
   }
 
@@ -41,7 +39,6 @@ class Seat {
   onSelect() {
     if (this.active) {
       this.deactivate();
-      this.$scope.activeSeatID = undefined;
     } else {
       this.activate();
     }
@@ -50,7 +47,9 @@ class Seat {
 
   activate() {
     this.active = true;
-    this.$scope.activeSeatID = this.id;
+    this.$scope.$apply(() => {
+      this.$scope.activeSeatID = this.id;
+    });
     this.svg
       .addClass('seat--active')
       .animate(this.config.transitionDuration)
@@ -64,6 +63,17 @@ class Seat {
       .removeClass('seat--active')
       .animate(this.config.transitionDuration)
       .fill(colors.themeSubcolor);
+  }
+
+
+  remove() {
+    this.svg
+      .removeClass('seat--active')
+      .animate(this.config.transitionDuration)
+      .fill(colors.themeColor)
+      .radius(0)
+      .stroke({ width: 0 });
+    setTimeout(() => {this.svg.remove();}, this.config.transitionDuration);
   }
 }
 

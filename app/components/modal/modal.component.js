@@ -16,10 +16,16 @@ angular.
           zindex: 1010,
           history: false,
           focusInput: false,
+          autoOpen: true,
           onClosing: () => {
-            Floor(floorID).setActiveSeatID(undefined);
+            $scope.$apply(() => {
+              Floor(floorID).setActiveSeatID(undefined);
+            });
             this.mapcanvas.deactivateAllSeats();
-          }
+          },
+          onClosed: () => {
+            this.modal.iziModal('destroy');
+          },
         };
 
 
@@ -27,6 +33,20 @@ angular.
           User.authorized,
           isAuthorized => {
             this.authorized = isAuthorized;
+          }
+        );
+
+        $scope.$watch(
+          Floor(floorID).getActiveSeat,
+          seat => {
+            this.seat = seat;
+          }
+        );
+
+        $scope.$watch(
+          () => this.authorized != undefined && this.seat != undefined,
+          (ready) => {
+            if (!ready) return;
             this.initSeatModal();
           }
         );
@@ -34,19 +54,13 @@ angular.
         $rootScope.$on('$stateChangeStart',
           (event, toState, toParams, fromState) => {
             if (toState.name == fromState.name) return;
-            this.modal.iziModal('destroy');
-          });
+            if (this.modal) this.modal.iziModal('destroy');
+          }
+        );
 
 
         this.$onInit = () => {
           this.modal = window.jQuery('#modal');
-          $scope.$watch(
-            Floor(floorID).getActiveSeat,
-            seat => {
-              this.seat = seat;
-              if (seat) this.modal.iziModal('open');
-            }
-          );
         };
 
 
@@ -60,7 +74,7 @@ angular.
 
 
         this.initSeatDetailsModal = () => {
-          this.modal.html(`
+          let getTemplate = () => `
             <form class="modal-form form-horizontal" autocomplete="off">
               <div class="form-group">
                 <label class="col-xs-4 control-label col-thinpad-right">Title</label>
@@ -81,7 +95,8 @@ angular.
                 </div>
               </div>
             </form>
-          `);
+          `;
+          this.modal.html(getTemplate());
           let init = () => {
             // let wrapper = this.modal.find('.iziModal-content');
           };
@@ -97,24 +112,24 @@ angular.
 
 
         this.initSeatEditModal = () => {
-          this.modal.html(`
+          let getTemplate = () => `
             <form class="modal-form form-horizontal" autocomplete="off">
               <div class="form-group">
                 <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>
                 <div class="col-xs-8 col-thinpad-left">
-                  <input type="title" class="form-control modal-form-control" value="Main seat" placeholder="Seat name" tabindex="21" id="inputSeat1">
+                  <input type="title" class="form-control modal-form-control" value="${this.seat.title ? this.seat.title : ''}" placeholder="Seat title" tabindex="21" id="inputSeat1">
                 </div>
               </div>
               <div class="form-group">
                 <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">*Seat ID</label>
                 <div class="col-xs-8 col-thinpad-left">
-                  <input type="seatID" class="form-control modal-form-control" value="seat123" placeholder="Unique seat ID" tabindex="22" id="inputSeat2">
+                  <input type="seatID" class="form-control modal-form-control" value="${this.seat.id}" placeholder="Unique seat ID" tabindex="22" id="inputSeat2">
                 </div>
               </div>
               <div class="form-group">
                 <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>
                 <div class="col-xs-8 col-thinpad-left">
-                  <input type="userID" class="form-control modal-form-control" value="Alexey Mironenko" placeholder="First and last name" tabindex="23" id="inputSeat3">
+                  <input type="userID" class="form-control modal-form-control" value="${this.seat.userID ? this.seat.userID : ''}" placeholder="First and last name" tabindex="23" id="inputSeat3">
                 </div>
               </div>
               <div class="form-group">
@@ -126,28 +141,48 @@ angular.
                 </div>
               </div>
             </form>
-            `);
+            `;
+          this.modal.html(getTemplate());
           let init = () => {
             let wrapper = this.modal.find('.iziModal-content');
             let form = wrapper.find('.modal-form');
             let deleteBtn = wrapper.find('#modal-delete-btn');
-            form.submit(event => {
+
+            form.one('submit', event => {
               event.preventDefault();
-              console.log('submit modal');
+              this.updateSeat();
             });
-            deleteBtn.click(event => {
+
+            deleteBtn.one('click', event => {
               event.preventDefault();
-              console.log('delete modal');
+              this.removeSeat();
             });
           };
           let seatEditModal = Object.assign(modalFrame, {
             title: 'Update seat',
-            subtitle: 'Fields with *anchor must be unique',
+            subtitle: 'Fields with *asterisk must be unique',
             onOpening: init,
           });
           $timeout(() => {
             this.modal.iziModal(seatEditModal);
           }, 0);
+        };
+
+
+        this.removeSeat = () => {
+          this.mapcanvas.removeSeat(this.seat);
+          $scope.$apply(() => {
+            Floor(floorID).removeSeat(this.seat);
+          });
+          this.seat = undefined;
+          this.modal.iziModal('close');
+        };
+
+
+        this.updateSeat = () => {
+          console.log('submit modal');
+          this.seat = undefined;
+          this.modal.iziModal('close');
         };
 
 

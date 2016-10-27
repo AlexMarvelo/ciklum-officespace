@@ -42,6 +42,15 @@ angular.
       };
 
 
+      const removeSeat = (seat = {id: undefined}) => {
+        const floorID = this.floorID;
+        if (this.activeSeat.id == seat.id) setActiveSeatID(undefined);
+        this.floors[floorID].seats = this.floors[floorID].seats.filter(s => s.id != seat.id);
+        if (seat.id) $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
+        localStorageService.set('floors', this.floors);
+      };
+
+
       const cleanSeats = () => {
         const floorID = this.floorID;
         if (!this.floors[floorID]) return;
@@ -59,8 +68,8 @@ angular.
           this.activeSeat = this.floors[this.floorID].seats.find(seat => seat.id == seatID);
           $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${this.floorID}`);
         } else {
+          if (this.activeSeat) $log.debug(`- unset active seat on the floor ${this.floorID}`);
           this.activeSeat = undefined;
-          $log.debug(`- unset active seat on the floor ${this.floorID}`);
         }
       };
 
@@ -71,6 +80,7 @@ angular.
           get,
           getSeats,
           addSeat,
+          removeSeat,
           cleanSeats,
           getActiveSeat,
           setActiveSeatID,

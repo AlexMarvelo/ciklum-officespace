@@ -46,6 +46,9 @@ class Mapcanvas {
 
   deactivateAllSeats() {
     this.seats.forEach(seat => seat.deactivate());
+    this.$scope.$apply(() => {
+      this.$scope.activeSeatID = undefined;
+    });
   }
 
 
@@ -67,11 +70,9 @@ class Mapcanvas {
     this.group = this.draw.group();
 
     this.draw.click(event => {
-      this.$scope.$apply(() => {
-        event.preventDefault();
-        const emptyPlaceClicked = event.target.id == this.draw.node.id;
-        if (emptyPlaceClicked && this.User.authorized() && this.userMode == 'draw') this.addSeat({x: event.offsetX, y: event.offsetY});
-      });
+      event.preventDefault();
+      const emptyPlaceClicked = event.target.id == this.draw.node.id;
+      if (emptyPlaceClicked && this.User.authorized() && this.userMode == 'draw') this.addSeat({x: event.offsetX, y: event.offsetY});
     });
   }
 
@@ -82,7 +83,9 @@ class Mapcanvas {
              Math.abs(seat.y - coords.y) < this.config.blockAreaRadius;
     }) != undefined;
     if (isTooClose) {
-      this.Notifications.add(this.Notifications.codes.tooCloseSeat);
+      this.$scope.$apply(() => {
+        this.Notifications.add(this.Notifications.codes.tooCloseSeat);
+      });
       return;
     }
 
@@ -104,6 +107,12 @@ class Mapcanvas {
       floorID: this.floorID,
     });
     return seat;
+  }
+
+
+  removeSeat(seat = {id: undefined}) {
+    this.seats.find(s => s.id == seat.id).remove();
+    this.seats = this.seats.filter(s => s.id != seat.id);
   }
 
 
