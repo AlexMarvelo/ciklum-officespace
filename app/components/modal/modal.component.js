@@ -211,6 +211,36 @@ angular.
             this.modal.iziModal('close');
           };
 
+          const emptyIDValidation = () => {
+            let valid = true;
+            this.modal.find('input[required]').each(function() {
+              if (!this.value.length) valid = false;
+            });
+            if (!valid) {
+              this.addNotification({
+                status: 'ERROR',
+                msg: 'Fill all required fields',
+                code: 1
+              });
+            }
+            return valid;
+          };
+
+          const uniqueIDValidation = () => {
+            let valid = true;
+            let seatID = this.modal.find('input[name="seatID"]').val();
+            if (seatID == this.seat.id) return valid;
+            valid = Floor(floorID).getSeats().find(seat => seat.id == seatID) == undefined;
+            if (!valid) {
+              this.addNotification({
+                status: 'ERROR',
+                msg: 'Enter unique seat ID',
+                code: 2
+              });
+            }
+            return valid;
+          };
+
           const init = () => {
             const self = this;
             const wrapper = this.modal.find('.iziModal-content');
@@ -223,7 +253,8 @@ angular.
 
             employeeNameField.keyup(() => {
               let query = employeeNameField.val().toLowerCase();
-              let newList = this.employees
+              let employees = Employees.get();
+              let newList = employees
                 .filter(employee =>
                   employee.firstName.toLowerCase().indexOf(query) != -1 ||
                   employee.lastName.toLowerCase().indexOf(query) != -1 ||
@@ -231,7 +262,7 @@ angular.
                 )
                 .map(employee => `<li data-id="${employee.id}">${employee.firstName} ${employee.lastName}</li>`)
                 .sort();
-              employeeList.html(newList.length != this.employees.length ? newList.join('') : '');
+              employeeList.html(newList.length != employees.length ? newList.join('') : '');
             });
 
             employeeList.click(event => {
@@ -242,26 +273,16 @@ angular.
             });
 
             this.modal.find('input[required]').keyup(function() {
-              if (this.value.length) self.removeNotification();
+              if (this.value.length) self.removeNotification({code: 1});
             });
 
-            this.modal.find('.modal-notification-msg').click(() => {
-              this.removeNotification();
+            this.modal.find('.modal-notification-msg').click(function() {
+              self.removeNotification({code: this.dataset.code});
             });
 
             form.submit(event => {
               event.preventDefault();
-              let valid = true;
-              this.modal.find('input[required]').each(function() {
-                if (!this.value.length) valid = false;
-              });
-              if (!valid) {
-                this.addNotification({
-                  status: 'ERROR',
-                  msg: 'Fill all required fields'
-                });
-                return;
-              }
+              if (!emptyIDValidation() || !uniqueIDValidation()) return;
               updateSeat();
             });
 
@@ -300,24 +321,27 @@ angular.
         };
 
 
-        this.addNotification = (notification) => {
-          const container = this.modal.find('.modal-notification-msg');
+        this.addNotification = (notification = {}) => {
+          if (!notification.code) return;
+          let container = this.modal.find('.modal-notification-msg');
           this.setStatus(notification.status);
+          container.attr('data-code', notification.code);
           container.html(notification.msg);
-          setTimeout(() => {
+          $timeout(() => {
             container.addClass('modal-notification-msg--active');
           }, 300);
         };
 
 
-        this.removeNotification = () => {
-          const container = this.modal.find('.modal-notification-msg');
+        this.removeNotification = (notification = {}) => {
+          if (!notification.code) return;
+          const container = this.modal.find(`.modal-notification-msg[data-code="${notification.code}"]`);
+          if (!container.length) return;
           container.removeClass('modal-notification-msg--active');
-          setTimeout(() => {
+          $timeout(() => {
             this.setStatus('NONE');
             container.html('');
           }, 300);
-
         };
       }
     ],

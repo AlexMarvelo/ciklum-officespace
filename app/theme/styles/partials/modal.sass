@@ -3,10 +3,10 @@
   right: 40px
   transition: border-color .3s ease-out
   padding-bottom: 15px
-.iziModal.isAttachedTop
-  top: 70px
-
-.iziModal
+  &.isAttachedTop
+    top: 70px
+  &-header
+    transition: background-color .3s ease-out
   .modal
     &-btn-control
       width: 100%
@@ -22,42 +22,45 @@
     &-input-value
       margin-bottom: 0
       padding-top: 7px
+    &-employee-list
+      position: relative
+      top: 0
+      width: 100%
+      background-color: white
+      >li
+        padding: 6px 12px 6px 5px
+        cursor: pointer
+        transition: background-color .3s ease-out
+        &:hover
+          background-color: rgba(0,0,0,.1)
+      &-container
+        position: relative
+    &-form-group--last
+      margin-bottom: 0
+    &-notification-msg
+      position: absolute
+      bottom: -15px
+      left: 50%
+      transition: transform .3s ease-out
+      transform: translate(-50%, 100%)
+      display: block
+      padding: 3px 10px 0
+      border-top-left-radius: 6px
+      border-top-right-radius: 6px
+      cursor: pointer
+      user-select: none
+      &--active
+        transform: translate(-50%, 0)
 
 .modal
-  &-employee-list
-    position: relative
-    top: 0
-    width: 100%
-    background-color: white
-    >li
-      padding: 6px 12px 6px 5px
-      cursor: pointer
-      transition: background-color .3s ease-out
-      &:hover
-        background-color: rgba(0,0,0,.1)
-    &-container
-      position: relative
-  &-form-group--last
-    margin-bottom: 0
   &-status
     &--error
       border-bottom-color: $errorColor !important
       .modal-notification-msg
         background-color: rgba($errorColor, .5)
+      .iziModal-header
+        background-color: $errorColor !important
     &--success
       border-bottom-color: $successColor !important
       .modal-notification-msg
         background-color: rgba($successColor, .5)
-  &-notification-msg
-    position: absolute
-    bottom: -15px
-    left: 50%
-    transition: transform .3s ease-out
-    transform: translate(-50%, 100%)
-    display: block
-    padding: 3px 10px 0
-    border-top-left-radius: 6px
-    border-top-right-radius: 6px
-    cursor: pointer
-    &--active
-      transform: translate(-50%, 0)
