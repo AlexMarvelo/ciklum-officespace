@@ -42,6 +42,20 @@ angular.
       };
 
 
+      const updateSeat = (seatID, newSeat) => {
+        const floorID = this.floorID;
+        let seat = this.floors[floorID].seats.find(s => s.id == seatID);
+        if (seat) {
+          let seatIndex = this.floors[floorID].seats.indexOf(seat);
+          this.floors[floorID].seats.splice(seatIndex, 1, newSeat);
+          localStorageService.set('floors', this.floors);
+          $log.debug(`- update seat ${seatID} on ${floorID}`);
+        } else {
+          $log.error(`- cant\'t update: seat ${seatID} not found on floor ${floorID}`);
+        }
+      };
+
+
       const removeSeat = (seat = {id: undefined}) => {
         const floorID = this.floorID;
         if (this.activeSeat.id == seat.id) setActiveSeatID(undefined);
@@ -81,6 +95,7 @@ angular.
           getSeats,
           addSeat,
           removeSeat,
+          updateSeat,
           cleanSeats,
           getActiveSeat,
           setActiveSeatID,

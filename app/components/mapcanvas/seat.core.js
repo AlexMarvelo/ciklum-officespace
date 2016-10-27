@@ -3,7 +3,7 @@
 const colors = require('../../config/colors.json');
 
 class Seat {
-  constructor(draw, $scope, coords = {x:0, y:0}, id = (new Date()).toISOString(), userID) {
+  constructor(draw, $scope, coords = {x:0, y:0}, id = (new Date()).toISOString(), title, employeeID) {
     this.config = {
       radius: 8,
       strokeWidth: 8,
@@ -14,8 +14,9 @@ class Seat {
     this.x = coords.x;
     this.y = coords.y;
     this.id = id;
+    this.title = title;
     this.active = false;
-    this.userID = userID;
+    this.employeeID = employeeID;
 
     this.svg = draw.circle(this.config.radius * 2)
       .fill(colors.themeSubcolor)

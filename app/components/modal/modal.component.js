@@ -5,8 +5,8 @@ const colors = require('../../config/colors.json');
 angular.
   module('modal').
   component('modal', {
-    controller: ['$scope', '$rootScope', '$stateParams', '$timeout', 'Floor', 'User',
-      function ModalCtrl($scope, $rootScope, $stateParams, $timeout, Floor, User) {
+    controller: ['$scope', '$rootScope', '$stateParams', '$timeout', 'Floor', 'Employees', 'User',
+      function ModalCtrl($scope, $rootScope, $stateParams, $timeout, Floor, Employees, User) {
         const floorID = $stateParams.floorID;
         const modalFrame = {
           headerColor: colors.themeColor,
@@ -25,7 +25,13 @@ angular.
           },
           onClosed: () => {
             this.modal.iziModal('destroy');
+            this.modal.empty();
           },
+        };
+
+
+        this.$onInit = () => {
+          this.modal = window.jQuery('#modal');
         };
 
 
@@ -44,7 +50,8 @@ angular.
         );
 
         $scope.$watch(
-          () => this.authorized != undefined && this.seat != undefined,
+          () => this.authorized != undefined &&
+                this.seat != undefined,
           (ready) => {
             if (!ready) return;
             this.initSeatModal();
@@ -54,14 +61,12 @@ angular.
         $rootScope.$on('$stateChangeStart',
           (event, toState, toParams, fromState) => {
             if (toState.name == fromState.name) return;
-            if (this.modal) this.modal.iziModal('destroy');
+            if (this.modal) {
+              this.modal.iziModal('destroy');
+              this.modal.empty();
+            }
           }
         );
-
-
-        this.$onInit = () => {
-          this.modal = window.jQuery('#modal');
-        };
 
 
         this.initSeatModal = () => {
@@ -74,37 +79,42 @@ angular.
 
 
         this.initSeatDetailsModal = () => {
-          let getTemplate = () => `
-            <form class="modal-form form-horizontal" autocomplete="off">
-              <div class="form-group">
-                <label class="col-xs-4 control-label col-thinpad-right">Title</label>
-                <div class="col-xs-8 col-thinpad-left">
-                  <p class="modal-input-value">Main seat</p>
+          const getTemplate = () => {
+            const hasEmployee = this.seat.employeeID != undefined;
+            const employee = this.getEmployee(this.seat.employeeID);
+            return `
+              <form class="modal-form form-horizontal" autocomplete="off">
+                <div class="form-group">
+                  <label class="col-xs-4 control-label col-thinpad-right">Seat title</label>
+                  <div class="col-xs-8 col-thinpad-left">
+                    <p class="modal-input-value">${this.seat.title ? this.seat.title : '<i>untitled</i>'}</p>
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <label class="col-xs-4 control-label col-thinpad-right">Seat ID</label>
-                <div class="col-xs-8 col-thinpad-left">
-                  <p class="modal-input-value">seat123</p>
+                <div class="form-group">
+                  <label class="col-xs-4 control-label col-thinpad-right">Seat ID</label>
+                  <div class="col-xs-8 col-thinpad-left">
+                    <p class="modal-input-value">${this.seat.id}</p>
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <label class="col-xs-4 control-label col-thinpad-right">Occupant</label>
-                <div class="col-xs-8 col-thinpad-left">
-                  <p class="modal-input-value">Alexey Mironenko</p>
+                <div class="form-group">
+                  <label class="col-xs-4 control-label col-thinpad-right">Occupant</label>
+                  <div class="col-xs-8 col-thinpad-left">
+                    <p class="modal-input-value">${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : '<i>free</i>'}</p>
+                  </div>
                 </div>
-              </div>
-            </form>
-          `;
-          this.modal.html(getTemplate());
-          let init = () => {
-            // let wrapper = this.modal.find('.iziModal-content');
+              </form>
+            `;
           };
-          let seatDetailsModal = Object.assign(modalFrame, {
+          this.modal.html(getTemplate());
+
+          const init = () => {};
+
+          const seatDetailsModal = Object.assign(modalFrame, {
             title: 'Seat details',
             subtitle: 'Only admin can change data here',
             onOpening: init,
           });
+
           $timeout(() => {
             this.modal.iziModal(seatDetailsModal);
           }, 0);
@@ -112,80 +122,148 @@ angular.
 
 
         this.initSeatEditModal = () => {
-          let getTemplate = () => `
-            <form class="modal-form form-horizontal" autocomplete="off">
-              <div class="form-group">
-                <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>
-                <div class="col-xs-8 col-thinpad-left">
-                  <input type="title" class="form-control modal-form-control" value="${this.seat.title ? this.seat.title : ''}" placeholder="Seat title" tabindex="21" id="inputSeat1">
+          const getTemplate = () => {
+            const hasEmployee = this.seat.employeeID != undefined;
+            const employee = this.getEmployee(this.seat.employeeID);
+            return `
+              <form class="modal-form form-horizontal" autocomplete="off">
+                <div class="form-group">
+                  <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>
+                  <div class="col-xs-8 col-thinpad-left">
+                    <input
+                      type="text"
+                      name="title"
+                      class="form-control modal-form-control"
+                      value="${this.seat.title ? this.seat.title : ''}"
+                      placeholder="Seat title"
+                      tabindex="21"
+                      id="inputSeat1">
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">*Seat ID</label>
-                <div class="col-xs-8 col-thinpad-left">
-                  <input type="seatID" class="form-control modal-form-control" value="${this.seat.id}" placeholder="Unique seat ID" tabindex="22" id="inputSeat2">
+                <div class="form-group">
+                  <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">*Seat ID</label>
+                  <div class="col-xs-8 col-thinpad-left">
+                    <input
+                      type="text"
+                      name="seatID"
+                      class="form-control modal-form-control"
+                      value="${this.seat.id}"
+                      placeholder="Unique seat ID"
+                      tabindex="22"
+                      required
+                      id="inputSeat2">
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>
-                <div class="col-xs-8 col-thinpad-left">
-                  <input type="userID" class="form-control modal-form-control" value="${this.seat.userID ? this.seat.userID : ''}" placeholder="First and last name" tabindex="23" id="inputSeat3">
+                <div class="form-group">
+                  <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>
+                  <div class="col-xs-8 col-thinpad-left">
+                    <input
+                      type="text"
+                      name="userName"
+                      class="form-control modal-form-control"
+                      value="${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : ''}"
+                      placeholder="First and last name" tabindex="23" id="inputSeat3">
+                    <input
+                      type="hidden"
+                      name="employeeID"
+                      value="${hasEmployee ? this.seat.employeeID : ''}"
+                      class="hidden">
+                    <div class="modal-employee-list-container">
+                      <ul class="modal-employee-list"></ul>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <div class="col-xs-6 col-thinpad-right">
-                  <button type="button" id="modal-delete-btn" class="btn btn-danger modal-btn-control" tabindex="25">Delete</button>
+                <div class="form-group">
+                  <div class="col-xs-6 col-thinpad-right">
+                    <button type="button" id="modal-delete-btn" class="btn btn-danger modal-btn-control" tabindex="25">Delete</button>
+                  </div>
+                  <div class="col-xs-6 col-thinpad-left">
+                    <button type="submit" class="btn btn-default modal-btn-control" tabindex="24">Save</button>
+                  </div>
                 </div>
-                <div class="col-xs-6 col-thinpad-left">
-                  <button type="submit" class="btn btn-default modal-btn-control" tabindex="24">Save</button>
-                </div>
-              </div>
-            </form>
-            `;
+              </form>
+              `;
+          };
           this.modal.html(getTemplate());
-          let init = () => {
-            let wrapper = this.modal.find('.iziModal-content');
-            let form = wrapper.find('.modal-form');
-            let deleteBtn = wrapper.find('#modal-delete-btn');
 
-            form.one('submit', event => {
-              event.preventDefault();
-              this.updateSeat();
+          const removeSeat = () => {
+            this.mapcanvas.removeSeat(this.seat);
+            $scope.$apply(() => {
+              Floor(floorID).removeSeat(this.seat);
+            });
+            this.seat = undefined;
+            this.modal.iziModal('close');
+          };
+
+          const updateSeat = () => {
+            let newSeat = Object.assign({}, this.seat);
+            newSeat.title = this.modal.find('input[name="title"]').val();
+            newSeat.id = this.modal.find('input[name="seatID"]').val();
+            newSeat.employeeID = this.modal.find('input[name="employeeID"]').val();
+
+            $scope.$apply(() => {
+              Floor(floorID).updateSeat(this.seat.id, newSeat);
+            });
+            this.mapcanvas.updateSeat(this.seat.id, newSeat);
+            this.seat = undefined;
+            this.modal.iziModal('close');
+          };
+
+          const init = () => {
+            const wrapper = this.modal.find('.iziModal-content');
+            const form = wrapper.find('.modal-form');
+            const deleteBtn = wrapper.find('#modal-delete-btn');
+
+            const employeeNameField = form.find('input[name="userName"]');
+            const employeeIDField = form.find('input[name="employeeID"]');
+            const employeeList = form.find('.modal-employee-list');
+
+            employeeNameField.keyup(() => {
+              let query = employeeNameField.val().toLowerCase();
+              let newList = this.employees
+                .filter(employee =>
+                  employee.firstName.toLowerCase().indexOf(query) != -1 ||
+                  employee.lastName.toLowerCase().indexOf(query) != -1 ||
+                  (employee.firstName.toLowerCase() + ' ' + employee.lastName.toLowerCase()).indexOf(query) != -1
+                )
+                .map(employee => `<li data-id="${employee.id}">${employee.firstName} ${employee.lastName}</li>`)
+                .sort();
+              employeeList.html(newList.length != this.employees.length ? newList.join('') : '');
             });
 
-            deleteBtn.one('click', event => {
+            employeeList.click(event => {
+              let employee = this.getEmployee(event.target.dataset.id);
+              employeeNameField.val(`${employee.firstName} ${employee.lastName}`);
+              employeeIDField.val(employee.id);
+              employeeList.html('');
+            });
+
+            form.submit(event => {
               event.preventDefault();
-              this.removeSeat();
+              updateSeat();
+            });
+
+            deleteBtn.click(event => {
+              event.preventDefault();
+              removeSeat();
             });
           };
-          let seatEditModal = Object.assign(modalFrame, {
+
+          const seatEditModal = Object.assign(modalFrame, {
             title: 'Update seat',
             subtitle: 'Fields with *asterisk must be unique',
             onOpening: init,
           });
+
           $timeout(() => {
             this.modal.iziModal(seatEditModal);
           }, 0);
         };
 
 
-        this.removeSeat = () => {
-          this.mapcanvas.removeSeat(this.seat);
-          $scope.$apply(() => {
-            Floor(floorID).removeSeat(this.seat);
-          });
-          this.seat = undefined;
-          this.modal.iziModal('close');
+        this.getEmployee = (employeeID) => {
+          return Employees.get().find(employee => employee.id == employeeID);
         };
-
-
-        this.updateSeat = () => {
-          console.log('submit modal');
-          this.seat = undefined;
-          this.modal.iziModal('close');
-        };
-
-
       }
     ],
 

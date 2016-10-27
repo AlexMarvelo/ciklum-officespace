@@ -28,6 +28,7 @@ class Mapcanvas {
       }
     );
 
+
     this.$scope.$watch(
       this.User.getMode,
       userMode => {
@@ -44,26 +45,6 @@ class Mapcanvas {
   }
 
 
-  deactivateAllSeats() {
-    this.seats.forEach(seat => seat.deactivate());
-    this.$scope.$apply(() => {
-      this.$scope.activeSeatID = undefined;
-    });
-  }
-
-
-  setSeats(seats = []) {
-    seats.forEach(seat => {
-      this.seats.push(new Seat(
-        this.draw,
-        this.$scope,
-        {x: seat.x, y: seat.y},
-        seat.id
-      ));
-    });
-  }
-
-
   drawMapCanvas(containerID, containerWidth, containerHeight) {
     this.draw = SVG(containerID).size(containerWidth, containerHeight).addClass('mapcanvas-canvas');
     this.group = this.draw.group();
@@ -76,7 +57,7 @@ class Mapcanvas {
   }
 
 
-  addSeat(coords = {x:0, y:0}, seatID = (new Date()).toISOString()) {
+  addSeat(coords = {x:0, y:0}, seatID = (new Date()).toISOString(), title, employeeID) {
     const isTooClose = this.seats.find(seat => {
       return Math.abs(seat.x - coords.x) < this.config.blockAreaRadius &&
              Math.abs(seat.y - coords.y) < this.config.blockAreaRadius;
@@ -92,7 +73,9 @@ class Mapcanvas {
       this.draw,
       this.$scope,
       coords,
-      seatID
+      seatID,
+      title,
+      employeeID
     );
     this.seats.push(seat);
     this.group.add(seat.svg);
@@ -100,16 +83,47 @@ class Mapcanvas {
       x: seat.x,
       y: seat.y,
       id: seat.id,
-      userID: seat.userID,
+      employeeID: seat.employeeID,
       floorID: this.floorID,
     });
     return seat;
   }
 
 
+  updateSeat(seatID, newSeat) {
+    let seat = this.seats.find(s => s.id == seatID);
+    if (!seat) return;
+    seat.title = newSeat.title;
+    seat.id = newSeat.id;
+    seat.employeeID = newSeat.employeeID;
+  }
+
+
   removeSeat(seat = {id: undefined}) {
     this.seats.find(s => s.id == seat.id).remove();
     this.seats = this.seats.filter(s => s.id != seat.id);
+  }
+
+
+  setSeats(seats = []) {
+    seats.forEach(seat => {
+      this.seats.push(new Seat(
+        this.draw,
+        this.$scope,
+        {x: seat.x, y: seat.y},
+        seat.id,
+        seat.title,
+        seat.employeeID
+      ));
+    });
+  }
+
+
+  deactivateAllSeats() {
+    this.seats.forEach(seat => seat.deactivate());
+    this.$scope.$apply(() => {
+      this.$scope.activeSeatID = undefined;
+    });
   }
 
 
