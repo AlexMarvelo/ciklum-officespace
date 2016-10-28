@@ -34,7 +34,7 @@ class Mapcanvas {
               floorID: this.floorID,
             };
             this.Floor(this.floorID).updateSeat(seat.id, updatedSeat);
-            this.Floor(this.floorID).setActiveSeatID(seat.id);
+            this.Floor(this.floorID).setActiveSeat(updatedSeat);
           } else {
             seat.deactivate();
           }

@@ -58,7 +58,7 @@ angular.
 
       const removeSeat = (seat = {id: undefined}) => {
         const floorID = this.floorID;
-        if (this.activeSeat.id == seat.id) setActiveSeatID(undefined);
+        if (this.activeSeat.id == seat.id) setActiveSeat(undefined);
         this.floors[floorID].seats = this.floors[floorID].seats.filter(s => s.id != seat.id);
         if (seat.id) $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
         localStorageService.set('floors', this.floors);
@@ -73,13 +73,12 @@ angular.
       };
 
 
-
       const getActiveSeat = () => this.activeSeat;
 
 
-      const setActiveSeatID = (seatID) => {
-        if (seatID) {
-          this.activeSeat = this.floors[this.floorID].seats.find(seat => seat.id == seatID);
+      const setActiveSeat = (activeSeat) => {
+        if (activeSeat && activeSeat.id != undefined) {
+          this.activeSeat = this.floors[this.floorID].seats.find(seat => seat.id == activeSeat.id);
           $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${this.floorID}`);
         } else {
           if (this.activeSeat) $log.debug(`- unset active seat on the floor ${this.floorID}`);
@@ -98,7 +97,7 @@ angular.
           updateSeat,
           cleanSeats,
           getActiveSeat,
-          setActiveSeatID,
+          setActiveSeat,
           serverRequest
         };
       };

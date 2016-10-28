@@ -31,7 +31,7 @@ angular.
           navigateCaption: false,
           onClosing: () => {
             $scope.$apply(() => {
-              Floor(floorID).setActiveSeatID(undefined);
+              Floor(floorID).setActiveSeat(undefined);
             });
             this.mapcanvas.deactivateAllSeats();
           },
