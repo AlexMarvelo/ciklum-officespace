@@ -8,6 +8,7 @@ angular.
       const initFloorState = {
         seats: [],
       };
+      const defaultWidth = 945;
 
 
       const serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/employees/:action`, {action: 'get'}, {
@@ -77,13 +78,34 @@ angular.
 
 
       const setActiveSeat = (activeSeat) => {
+        const floorID = this.floorID;
         if (activeSeat && activeSeat.id != undefined) {
-          this.activeSeat = this.floors[this.floorID].seats.find(seat => seat.id == activeSeat.id);
-          $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${this.floorID}`);
+          this.activeSeat = this.floors[floorID].seats.find(seat => seat.id == activeSeat.id);
+          $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${floorID}`);
         } else {
-          if (this.activeSeat) $log.debug(`- unset active seat on the floor ${this.floorID}`);
+          if (this.activeSeat) $log.debug(`- unset active seat on the floor ${floorID}`);
           this.activeSeat = undefined;
         }
+      };
+
+
+      const getConfig = () => {
+        const floorID = this.floorID;
+        const floor = this.floors[floorID];
+        if (!floor.config) return { mapSrc: '', width: defaultWidth };
+        return {
+          mapSrc: floor.config.mapSrc || '',
+          width: floor.config.width || defaultWidth,
+        };
+      };
+
+      const setConfig = (config) => {
+        const floorID = this.floorID;
+        let floor = this.floors[floorID];
+        if (!floor.config) floor.config = { mapSrc: '', width: defaultWidth };
+        floor.config.mapSrc = config.mapSrc || floor.config.mapSrc;
+        floor.config.width = config.width || floor.config.width;
+        localStorageService.set('floors', this.floors);
       };
 
 
@@ -98,7 +120,9 @@ angular.
           cleanSeats,
           getActiveSeat,
           setActiveSeat,
-          serverRequest
+          serverRequest,
+          getConfig,
+          setConfig,
         };
       };
     }
