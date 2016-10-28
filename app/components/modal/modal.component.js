@@ -50,8 +50,16 @@ angular.
         );
 
         $scope.$watch(
+          Employees.get,
+          employees => {
+            this.employees = employees;
+          }
+        );
+
+        $scope.$watch(
           () => this.authorized != undefined &&
-                this.seat != undefined,
+                this.seat != undefined &&
+                this.employees != undefined,
           (ready) => {
             if (!ready) return;
             this.initSeatModal();
@@ -123,6 +131,8 @@ angular.
 
 
         this.initSeatEditModal = () => {
+          const removeEmployeeIcon = '<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>';
+
           const getTemplate = () => {
             const hasEmployee = this.seat.employeeID != undefined;
             const employee = this.getEmployee(this.seat.employeeID);
@@ -158,12 +168,16 @@ angular.
                 <div class="form-group">
                   <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>
                   <div class="col-xs-8 col-thinpad-left">
-                    <input
-                      type="text"
-                      name="userName"
-                      class="form-control modal-form-control"
-                      value="${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : ''}"
-                      placeholder="First and last name" tabindex="23" id="inputSeat3">
+                    <div class="modal-form-control-container modal-form-control-container--employee">
+                      <input
+                        type="text"
+                        name="userName"
+                        class="form-control modal-form-control modal-form-control--employee"
+                        value="${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : ''}"
+                        placeholder="First and last name" tabindex="23" id="inputSeat3">
+                      ${hasEmployee && employee ? removeEmployeeIcon : ''}
+                    </div>
+
                     <input
                       type="hidden"
                       name="employeeID"
@@ -243,18 +257,29 @@ angular.
 
           const init = () => {
             const self = this;
-            const wrapper = this.modal.find('.iziModal-content');
-            const form = wrapper.find('.modal-form');
-            const deleteBtn = wrapper.find('#modal-delete-btn');
+            const form = this.modal.find('.modal-form');
+            const deleteBtn = this.modal.find('#modal-delete-btn');
 
             const employeeNameField = form.find('input[name="userName"]');
             const employeeIDField = form.find('input[name="employeeID"]');
+            const employeeFieldContainer = form.find('.modal-form-control-container--employee');
             const employeeList = form.find('.modal-employee-list');
 
+            const clearEmployeeList = () => {
+              employeeNameField.val('');
+              employeeIDField.val('');
+              employeeList.html('');
+              form.find('.glyphicon-remove--employee').remove();
+            };
+
+            form.find('.glyphicon-remove--employee').click(event => {
+              event.preventDefault();
+              clearEmployeeList();
+            });
+
             employeeNameField.keyup(() => {
-              let query = employeeNameField.val().toLowerCase();
-              let employees = Employees.get();
-              let newList = employees
+              const query = employeeNameField.val().toLowerCase();
+              let newList = this.employees.slice(0)
                 .filter(employee =>
                   employee.firstName.toLowerCase().indexOf(query) != -1 ||
                   employee.lastName.toLowerCase().indexOf(query) != -1 ||
@@ -262,14 +287,24 @@ angular.
                 )
                 .map(employee => `<li data-id="${employee.id}">${employee.firstName} ${employee.lastName}</li>`)
                 .sort();
-              employeeList.html(newList.length != employees.length ? newList.join('') : '');
+              form.find('.glyphicon-remove--employee').remove();
+              employeeList.html(newList.length != this.employees.length ? newList.join('') : '');
             });
 
             employeeList.click(event => {
-              let employee = this.getEmployee(event.target.dataset.id);
+              const employee = this.getEmployee(event.target.dataset.id);
               employeeNameField.val(`${employee.firstName} ${employee.lastName}`);
               employeeIDField.val(employee.id);
               employeeList.html('');
+              const removeIcon = form.find('.glyphicon-remove--employee');
+              if (!removeIcon.length) {
+                const removeIcon = window.jQuery(removeEmployeeIcon);
+                removeIcon.click(event => {
+                  event.preventDefault();
+                  clearEmployeeList();
+                });
+                employeeFieldContainer.append(removeIcon);
+              }
             });
 
             this.modal.find('input[required]').keyup(function() {
@@ -305,7 +340,7 @@ angular.
 
 
         this.getEmployee = (employeeID) => {
-          return Employees.get().find(employee => employee.id == employeeID);
+          return this.employees.find(employee => employee.id == employeeID);
         };
 
 
@@ -352,8 +387,7 @@ angular.
 
     template: `
       <div class="modal-container">
-        <div id="modal">
-        </div>
+        <div id="modal"></div>
       </div>
     `,
   });
