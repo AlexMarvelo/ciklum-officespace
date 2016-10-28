@@ -1,0 +1,140 @@
+.iziModal
+  transition: border-color .3s ease-out
+  padding-bottom: 15px
+  overflow: visible !important
+  margin-right: -150px
+  &.isAttachedTop
+    top: 70px
+  &-header
+    transition: background-color .3s ease-out
+  .modal
+    &-btn-control
+      width: 100%
+    &-form-control
+      padding-left: 0
+      box-shadow: none
+      border: none
+      border-bottom: 1px solid transparent
+      transition: border-color .3s ease-out
+      border-radius: 0
+      &:focus
+        border-color: black
+      &-container
+        position: relative
+        .glyphicon
+          position: absolute
+          right: 3px
+          cursor: pointer
+          top: 50%
+          transform: translateY(-50%)
+          color: rgba(0,0,0,.9)
+          transition: color .2s ease-out
+          &:hover
+            color: rgba(0,0,0,.7)
+      &--employee
+        padding-right: 20px
+    &-input-value
+      margin-bottom: 0
+      padding-top: 7px
+    &-employee-list
+      position: relative
+      top: 0
+      width: 100%
+      background-color: white
+      >li
+        padding: 6px 12px 6px 5px
+        cursor: pointer
+        transition: background-color .3s ease-out
+        &:hover
+          background-color: rgba(0,0,0,.1)
+      &-container
+        position: relative
+    &-form-group--last
+      margin-bottom: 0
+    &-notification
+      &-container
+        position: absolute
+        bottom: -15px
+        left: 0
+        height: 25px
+        overflow: hidden
+        width: 100%
+      &-msg
+        position: absolute
+        bottom: 0
+        left: 50%
+        transition: transform .3s ease-out
+        transform: translate(-50%, 100%)
+        display: block
+        padding: 3px 10px 0
+        border-top-left-radius: 6px
+        border-top-right-radius: 6px
+        cursor: pointer
+        user-select: none
+        &--active
+          transform: translate(-50%, 0)
+    &-navigation
+      position: absolute
+      top: 80px
+      transform: translateY(-50%)
+      cursor: pointer
+      width: 25px
+      height: 60px
+      user-select: none
+      &::before,
+      &::after
+        content: ''
+        position: absolute
+        width: 30px
+        height: 1px
+        background-color: rgba(white, .5)
+        transition: background-color .2s ease-out
+      &:hover
+        &::before,
+        &::after
+          background-color: rgba(white, .8)
+      &-left
+        left: -30px
+        right: auto
+        &::before
+          top: 50%
+          left: 50%
+          margin-top: -14px
+          margin-left: -16px
+          transform: rotate(-65deg)
+        &::after
+          top: 50%
+          left: 50%
+          margin-top: 13px
+          margin-left: -16px
+          transform: rotate(65deg)
+      &-right
+        left: auto
+        right: -30px
+        &::before
+          top: 50%
+          right: 50%
+          margin-top: -14px
+          margin-right: -16px
+          transform: rotate(65deg) translateY(-50%)
+        &::after
+          top: 50%
+          right: 50%
+          margin-top: 13px
+          margin-right: -16px
+          transform: rotate(-65deg)
+
+
+
+.modal
+  &-status
+    &--error
+      border-bottom-color: $errorColor !important
+      .modal-notification-msg
+        background-color: rgba($errorColor, .5)
+      .iziModal-header
+        background-color: $errorColor !important
+    &--success
+      border-bottom-color: $successColor !important
+      .modal-notification-msg
+        background-color: rgba($successColor, .5)

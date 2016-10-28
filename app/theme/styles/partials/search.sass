@@ -1,0 +1,52 @@
+.search
+  &-container
+    height: 50px
+    padding: 0
+    width: 100%
+    max-width: 330px
+  &-form
+    width: 100%
+    margin: 0 auto
+  &-input
+    background: none
+    border: none
+    font-size: 16px
+    color: black
+    width: 100%
+    position: relative
+    padding: 13px 15px
+    border-bottom: 2px solid transparent
+    transition: border-color .3s ease-out
+    &:focus
+      border-bottom-color: black
+  &-result-list
+    padding-top: 10px
+    padding-bottom: 10px
+    background-color: $themeColor-light
+  &-result-item
+    padding: 5px 15px
+    cursor: pointer
+    &:hover,
+    &:active
+      background-color: $themeColor
+  &-result-item-disabled
+    cursor: default
+    &:hover,
+    &:active
+      background-color: $themeColor-light
+
+@media screen and (min-width: 992px)
+  .search
+    &-container
+      position: fixed
+      top: 0
+      left: 50%
+      transform: translateX(-50%)
+      z-index: 10001
+
+@media screen and (max-width: 991px)
+  .search
+    &-container
+      margin: 0 auto
+    &-input
+      border-bottom: 2px solid black

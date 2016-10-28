@@ -14,6 +14,8 @@ angular.
         notFound: 404,
         serverError: 500,
         dbNotConnected: 503,
+        svgNotSupported: 420,
+        tooCloseSeat: 421,
       };
       const disabled = ['success'];
 
@@ -26,6 +28,7 @@ angular.
       const add = (code, notification) => {
         if (notification) {
           this.notifications.push(notification);
+          $log.debug(notification);
           return;
         }
         let newNotification;
@@ -79,14 +82,27 @@ angular.
             code: codes.badRequest
           };
           break;
+        case codes.svgNotSupported:
+          newNotification = {
+            msg: 'SVG drowing is not supported',
+            type: 'danger',
+            code: codes.svgNotSupported
+          };
+          break;
+        case codes.tooCloseSeat:
+          newNotification = {
+            msg: 'Seat is to close to another one. You can\'t place it here',
+            type: 'warning',
+            code: codes.tooCloseSeat
+          };
+          break;
         }
         if (!newNotification) return;
         if (disabled.find(disabledKey => codes[disabledKey] == newNotification.code)) return;
         newNotification.timestamp = (new Date()).toISOString();
         this.notifications.push(newNotification);
         this.notificationsLog.push(newNotification);
-        $log.debug(`- add notification ${!notification ? '(code ' + code + ')' : ':'}`);
-        if (notification) $log.debug(notification);
+        $log.debug(`- add notification ${!notification ? '(code ' + code + ', timestamp ' + newNotification.timestamp + ')' : ':'}`);
         $timeout(() => remove(newNotification), timeout);
       };
 

@@ -1,0 +1,22 @@
+.navbar
+  background: $themeColor
+  border: none
+  box-shadow: 0 0 8px rgba(0,0,0,.3)
+  &-toggle
+    border-color: black
+    .icon-bar
+      background-color: black
+  a
+    color: black
+  &-brand-logo
+    padding: 10px 10px 10px 15px
+    >img
+      height: 100%
+
+.nav > li > a
+  &:focus
+    background-color: transparent
+  &.active,
+  &:focus.active,
+  &:hover
+    background-color: $themeColor-light

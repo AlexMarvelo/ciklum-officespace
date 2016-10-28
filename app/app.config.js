@@ -15,12 +15,22 @@ angular
         $stateProvider.state({
           name: 'home',
           url: '/',
-          data: {
-            authorization: true,
-            redirectTo: 'login'
-          },
           template: '<homepage></homepage>'
         });
+        $stateProvider.state({
+          name: 'floor',
+          url: '/floor/:floorID',
+          template: '<floor></floor>'
+        });
+        // $stateProvider.state({
+        //   name: 'admin',
+        //   url: '/admin',
+        //   data: {
+        //     authorization: true,
+        //     redirectTo: 'login'
+        //   },
+        //   template: '<homepage></homepage>'
+        // });
         $stateProvider.state({
           name: 'login',
           url: '/login',

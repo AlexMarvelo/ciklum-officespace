@@ -2,6 +2,7 @@
 
 //const fetch = require('node-fetch');
 const utils = {};
+const Employee = require('../models/employee');
 
 
 utils.isLoggedIn = (req, res, next) => {
@@ -29,6 +30,18 @@ utils.renderApp = (res) => {
     pageTitle: 'Ciklum OfficeSpace'
   };
   res.render('index', props);
+};
+
+
+utils.sendEmployees = (req, res) => {
+  Employee.find({}).exec()
+    // .then(console.log)
+    .then(employees => res.send({status: 200, employees}))
+    .catch(error => {
+      error.status = 500;
+      res.send(error);
+      throw error;
+    });
 };
 
 

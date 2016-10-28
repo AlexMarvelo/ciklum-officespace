@@ -65,4 +65,22 @@ module.exports = (router, passport) => {
       }
     }
   );
+
+
+  //
+  // employees interface
+  //
+
+  router.all('/employees/:action', (req, res) => {
+    switch (req.params.action) {
+
+    case 'get':
+      utils.sendEmployees(req, res);
+      break;
+
+    default:
+      res.redirect('/');
+      throw new Error('Wrong request path');
+    }
+  });
 };
