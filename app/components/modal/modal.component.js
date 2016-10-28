@@ -146,7 +146,7 @@ angular.
                       name="title"
                       class="form-control modal-form-control"
                       value="${this.seat.title ? this.seat.title : ''}"
-                      placeholder="Seat title"
+                      placeholder="untitled"
                       tabindex="21"
                       id="inputSeat1">
                   </div>
@@ -174,7 +174,9 @@ angular.
                         name="userName"
                         class="form-control modal-form-control modal-form-control--employee"
                         value="${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : ''}"
-                        placeholder="First and last name" tabindex="23" id="inputSeat3">
+                        placeholder="free"
+                        tabindex="23"
+                        id="inputSeat3">
                       ${hasEmployee && employee ? removeEmployeeIcon : ''}
                     </div>
 
