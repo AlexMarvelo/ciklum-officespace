@@ -8,10 +8,17 @@ angular.
     controller: ['$scope', '$rootScope', '$stateParams', '$timeout', 'Floor', 'Employees', 'User',
       function ModalCtrl($scope, $rootScope, $stateParams, $timeout, Floor, Employees, User) {
         const floorID = $stateParams.floorID;
+        const modalWidth = 300;
+        const modalNotificationDelay = 300;
+        const sideIndent = 40;
+        const notificationCodes = {
+          requiredField: 1,
+          uniqueField: 2,
+        };
         const modalFrame = {
           headerColor: colors.themeColor,
           attached: 'top',
-          width: 300,
+          width: modalWidth,
           padding: 15,
           zindex: 1010,
           history: false,
@@ -27,6 +34,11 @@ angular.
             this.modal.iziModal('destroy');
             this.modal.empty();
           },
+        };
+
+
+        this.config = {
+          attached: 'RIGHT'
         };
 
 
@@ -199,7 +211,11 @@ angular.
                   </div>
                 </div>
               </form>
-              <span class="modal-notification-msg"></span>
+              <div class="modal-notification-container">
+                <span class="modal-notification-msg"></span>
+              </div>
+              <span class="modal-navigation modal-navigation-left"></span>
+              <span class="modal-navigation modal-navigation-right"></span>
               `;
           };
           this.modal.html(getTemplate());
@@ -236,7 +252,7 @@ angular.
               this.addNotification({
                 status: 'ERROR',
                 msg: 'Fill all required fields',
-                code: 1
+                code: notificationCodes.requiredField
               });
             }
             return valid;
@@ -251,7 +267,7 @@ angular.
               this.addNotification({
                 status: 'ERROR',
                 msg: 'Enter unique seat ID',
-                code: 2
+                code: notificationCodes.uniqueField
               });
             }
             return valid;
@@ -266,6 +282,24 @@ angular.
             const employeeIDField = form.find('input[name="employeeID"]');
             const employeeFieldContainer = form.find('.modal-form-control-container--employee');
             const employeeList = form.find('.modal-employee-list');
+
+            this.modal.find('.modal-navigation-left').click(event => {
+              event.preventDefault();
+              this.attachToLeft();
+            });
+
+            this.modal.find('.modal-navigation-right').click(event => {
+              event.preventDefault();
+              this.attachToRight();
+            });
+
+            switch (this.config.attached) {
+            case 'LEFT':
+              this.attachToLeft();
+              break;
+            case 'RIGHT':
+              this.attachToRight();
+            }
 
             const clearEmployeeList = () => {
               employeeNameField.val('');
@@ -310,7 +344,7 @@ angular.
             });
 
             this.modal.find('input[required]').keyup(function() {
-              if (this.value.length) self.removeNotification({code: 1});
+              if (this.value.length) self.removeNotification({code: notificationCodes.requiredField});
             });
 
             this.modal.find('.modal-notification-msg').click(function() {
@@ -366,7 +400,7 @@ angular.
           container.html(notification.msg);
           $timeout(() => {
             container.addClass('modal-notification-msg--active');
-          }, 300);
+          }, modalNotificationDelay);
         };
 
 
@@ -378,7 +412,29 @@ angular.
           $timeout(() => {
             this.setStatus('NONE');
             container.html('');
-          }, 300);
+          }, modalNotificationDelay);
+        };
+
+        this.attachToLeft = () => {
+          this.modal.css({
+            'left': modalWidth/2 + sideIndent,
+            'right': 'auto',
+            'margin-left': '0 !important',
+          });
+          this.modal.find('.modal-navigation-left').css('display', 'none');
+          this.modal.find('.modal-navigation-right').css('display', 'block');
+          this.config.attached = 'LEFT';
+        };
+
+        this.attachToRight = () => {
+          this.modal.css({
+            'left': 'auto',
+            'right': modalWidth/2 + sideIndent,
+            'margin-right': '0 !important',
+          });
+          this.modal.find('.modal-navigation-left').css('display', 'block');
+          this.modal.find('.modal-navigation-right').css('display', 'none');
+          this.config.attached = 'RIGHT';
         };
       }
     ],
