@@ -19,12 +19,27 @@ class Mapcanvas {
 
 
     this.$scope.$watch(
-      () => this.$scope.activeSeatID,
-      seatID => {
-        this.Floor(this.floorID).setActiveSeatID(seatID);
+      'activeSeat',
+      (activeSeat = {id: undefined}) => {
         this.seats.forEach(seat => {
-          if (seat.id != seatID) seat.deactivate();
+          if (seat.id == activeSeat.id) {
+            seat.x = activeSeat.x;
+            seat.y = activeSeat.y;
+            const updatedSeat = {
+              id: seat.id,
+              x: seat.x,
+              y: seat.y,
+              title: seat.title,
+              employeeID: seat.employeeID,
+              floorID: this.floorID,
+            };
+            this.Floor(this.floorID).updateSeat(seat.id, updatedSeat);
+            this.Floor(this.floorID).setActiveSeatID(seat.id);
+          } else {
+            seat.deactivate();
+          }
         });
+
       }
     );
 
@@ -45,9 +60,19 @@ class Mapcanvas {
   }
 
 
+  isPlaceFree(coords = {x:0, y:0}) {
+    return this.seats.find(seat => {
+      return Math.abs(seat.x - coords.x) < this.config.blockAreaRadius &&
+             Math.abs(seat.y - coords.y) < this.config.blockAreaRadius;
+    }) == undefined;
+  }
+
+
   drawMapCanvas(containerID, containerWidth, containerHeight) {
     this.draw = SVG(containerID).size(containerWidth, containerHeight).addClass('mapcanvas-canvas');
     this.group = this.draw.group();
+    this.config.width = containerWidth;
+    this.config.height = containerHeight;
 
     this.draw.click(event => {
       event.preventDefault();
@@ -58,11 +83,7 @@ class Mapcanvas {
 
 
   addSeat(coords = {x:0, y:0}, seatID = (new Date()).toISOString(), title, employeeID) {
-    const isTooClose = this.seats.find(seat => {
-      return Math.abs(seat.x - coords.x) < this.config.blockAreaRadius &&
-             Math.abs(seat.y - coords.y) < this.config.blockAreaRadius;
-    }) != undefined;
-    if (isTooClose) {
+    if (!this.isPlaceFree(coords)) {
       this.$scope.$apply(() => {
         this.Notifications.add(this.Notifications.codes.tooCloseSeat);
       });
@@ -70,8 +91,12 @@ class Mapcanvas {
     }
 
     let seat = new Seat(
-      this.draw,
-      this.$scope,
+      {
+        draw: this.draw,
+        $scope: this.$scope,
+        width: this.config.width,
+        height: this.config.height,
+      },
       coords,
       seatID,
       title,
@@ -80,10 +105,11 @@ class Mapcanvas {
     this.seats.push(seat);
     this.group.add(seat.svg);
     this.Floor(this.floorID).addSeat({
+      id: seat.id,
       x: seat.x,
       y: seat.y,
-      id: seat.id,
       employeeID: seat.employeeID,
+      title: seat.title,
       floorID: this.floorID,
     });
     return seat;
@@ -108,9 +134,15 @@ class Mapcanvas {
   setSeats(seats = []) {
     seats.forEach(seat => {
       this.seats.push(new Seat(
-        this.draw,
-        this.$scope,
-        {x: seat.x, y: seat.y},
+        {
+          draw: this.draw,
+          $scope: this.$scope,
+          width: this.config.width,
+          height: this.config.height,
+        }, {
+          x: seat.x,
+          y: seat.y
+        },
         seat.id,
         seat.title,
         seat.employeeID
@@ -122,7 +154,7 @@ class Mapcanvas {
   deactivateAllSeats() {
     this.seats.forEach(seat => seat.deactivate());
     this.$scope.$apply(() => {
-      this.$scope.activeSeatID = undefined;
+      this.$scope.activeSeat = undefined;
     });
   }
 

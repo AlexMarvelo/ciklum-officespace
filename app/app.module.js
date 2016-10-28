@@ -9,6 +9,7 @@ require('./theme/styles/custom-styles.sass');
 
 window.jQuery = require('jquery');
 window.SVG = require('svgjs');
+require('svg.draggable.js');
 require('../node_modules/bootstrap/dist/js/bootstrap.js');
 require('../node_modules/iziModal/js/iziModal.js');
 

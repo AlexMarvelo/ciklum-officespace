@@ -220,10 +220,12 @@ angular.
 
 
         this.updateSeat = () => {
+          const employeeIDField = this.modal.find('input[name="employeeID"]');
+
           let newSeat = Object.assign({}, this.seat);
           newSeat.title = this.modal.find('input[name="title"]').val();
           newSeat.id = this.modal.find('input[name="seatID"]').val();
-          newSeat.employeeID = this.modal.find('input[name="employeeID"]').val();
+          newSeat.employeeID = employeeIDField.val().length ? employeeIDField.val() : undefined;
 
           $scope.$apply(() => {
             Floor(floorID).updateSeat(this.seat.id, newSeat);
