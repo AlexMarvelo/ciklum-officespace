@@ -79,6 +79,6 @@ angular
     .constant('CONFIG', {
       'env': 'production',
       'appDomain_local': 'http://localhost:3000',
-      'appDomain_remote': 'https://ciklumspace.herokuapp.com',
+      'appDomain_remote': 'http://ciklumspace.herokuapp.com',
       'appName': 'Ciklum OfficeSpace'
     });
