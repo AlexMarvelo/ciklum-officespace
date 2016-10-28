@@ -15,6 +15,7 @@ angular.
           requiredField: 1,
           uniqueField: 2,
         };
+        const removeEmployeeIcon = '<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>';
         const modalFrame = {
           headerColor: colors.themeColor,
           attached: 'top',
@@ -35,7 +36,6 @@ angular.
             this.modal.empty();
           },
         };
-
 
         this.config = {
           attached: 'RIGHT'
@@ -99,36 +99,17 @@ angular.
 
 
         this.initSeatDetailsModal = () => {
-          const getTemplate = () => {
-            const hasEmployee = this.seat.employeeID != undefined;
-            const employee = this.getEmployee(this.seat.employeeID);
-            return `
-              <form class="modal-form form-horizontal" autocomplete="off">
-                <div class="form-group">
-                  <label class="col-xs-4 control-label col-thinpad-right">Seat title</label>
-                  <div class="col-xs-8 col-thinpad-left">
-                    <p class="modal-input-value">${this.seat.title ? this.seat.title : '<i>untitled</i>'}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-xs-4 control-label col-thinpad-right">Seat ID</label>
-                  <div class="col-xs-8 col-thinpad-left">
-                    <p class="modal-input-value">${this.seat.id}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-xs-4 control-label col-thinpad-right">Occupant</label>
-                  <div class="col-xs-8 col-thinpad-left">
-                    <p class="modal-input-value">${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : '<i>free</i>'}</p>
-                  </div>
-                </div>
-              </form>
-              <span class="modal-notification-msg"></span>
-            `;
-          };
-          this.modal.html(getTemplate());
+          this.modal.html(this.getDetailsTemplate());
 
-          const init = () => {};
+          const init = () => {
+            switch (this.config.attached) {
+            case 'LEFT':
+              this.attachToLeft();
+              break;
+            case 'RIGHT':
+              this.attachToRight();
+            }
+          };
 
           const seatDetailsModal = Object.assign(modalFrame, {
             title: 'Seat details',
@@ -143,135 +124,7 @@ angular.
 
 
         this.initSeatEditModal = () => {
-          const removeEmployeeIcon = '<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>';
-
-          const getTemplate = () => {
-            const hasEmployee = this.seat.employeeID != undefined;
-            const employee = this.getEmployee(this.seat.employeeID);
-            return `
-              <form class="modal-form form-horizontal" autocomplete="off" novalidate>
-                <div class="form-group">
-                  <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>
-                  <div class="col-xs-8 col-thinpad-left">
-                    <input
-                      type="text"
-                      name="title"
-                      class="form-control modal-form-control"
-                      value="${this.seat.title ? this.seat.title : ''}"
-                      placeholder="untitled"
-                      tabindex="21"
-                      id="inputSeat1">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">*Seat ID</label>
-                  <div class="col-xs-8 col-thinpad-left">
-                    <input
-                      type="text"
-                      name="seatID"
-                      class="form-control modal-form-control"
-                      value="${this.seat.id}"
-                      placeholder="Unique seat ID"
-                      tabindex="22"
-                      required
-                      id="inputSeat2">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>
-                  <div class="col-xs-8 col-thinpad-left">
-                    <div class="modal-form-control-container modal-form-control-container--employee">
-                      <input
-                        type="text"
-                        name="userName"
-                        class="form-control modal-form-control modal-form-control--employee"
-                        value="${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : ''}"
-                        placeholder="free"
-                        tabindex="23"
-                        id="inputSeat3">
-                      ${hasEmployee && employee ? removeEmployeeIcon : ''}
-                    </div>
-
-                    <input
-                      type="hidden"
-                      name="employeeID"
-                      value="${hasEmployee ? this.seat.employeeID : ''}"
-                      class="hidden">
-                    <div class="modal-employee-list-container">
-                      <ul class="modal-employee-list"></ul>
-                    </div>
-                  </div>
-                </div>
-                <div class="form-group modal-form-group--last">
-                  <div class="col-xs-6 col-thinpad-right">
-                    <button type="button" id="modal-delete-btn" class="btn btn-danger modal-btn-control" tabindex="25">Delete</button>
-                  </div>
-                  <div class="col-xs-6 col-thinpad-left">
-                    <button type="submit" class="btn btn-default modal-btn-control" tabindex="24">Save</button>
-                  </div>
-                </div>
-              </form>
-              <div class="modal-notification-container">
-                <span class="modal-notification-msg"></span>
-              </div>
-              <span class="modal-navigation modal-navigation-left"></span>
-              <span class="modal-navigation modal-navigation-right"></span>
-              `;
-          };
-          this.modal.html(getTemplate());
-
-          const removeSeat = () => {
-            this.mapcanvas.removeSeat(this.seat);
-            $scope.$apply(() => {
-              Floor(floorID).removeSeat(this.seat);
-            });
-            this.seat = undefined;
-            this.modal.iziModal('close');
-          };
-
-          const updateSeat = () => {
-            let newSeat = Object.assign({}, this.seat);
-            newSeat.title = this.modal.find('input[name="title"]').val();
-            newSeat.id = this.modal.find('input[name="seatID"]').val();
-            newSeat.employeeID = this.modal.find('input[name="employeeID"]').val();
-
-            $scope.$apply(() => {
-              Floor(floorID).updateSeat(this.seat.id, newSeat);
-            });
-            this.mapcanvas.updateSeat(this.seat.id, newSeat);
-            this.seat = undefined;
-            this.modal.iziModal('close');
-          };
-
-          const emptyIDValidation = () => {
-            let valid = true;
-            this.modal.find('input[required]').each(function() {
-              if (!this.value.length) valid = false;
-            });
-            if (!valid) {
-              this.addNotification({
-                status: 'ERROR',
-                msg: 'Fill all required fields',
-                code: notificationCodes.requiredField
-              });
-            }
-            return valid;
-          };
-
-          const uniqueIDValidation = () => {
-            let valid = true;
-            let seatID = this.modal.find('input[name="seatID"]').val();
-            if (seatID == this.seat.id) return valid;
-            valid = Floor(floorID).getSeats().find(seat => seat.id == seatID) == undefined;
-            if (!valid) {
-              this.addNotification({
-                status: 'ERROR',
-                msg: 'Enter unique seat ID',
-                code: notificationCodes.uniqueField
-              });
-            }
-            return valid;
-          };
+          this.modal.html(this.getEditTemplate());
 
           const init = () => {
             const self = this;
@@ -283,16 +136,6 @@ angular.
             const employeeFieldContainer = form.find('.modal-form-control-container--employee');
             const employeeList = form.find('.modal-employee-list');
 
-            this.modal.find('.modal-navigation-left').click(event => {
-              event.preventDefault();
-              this.attachToLeft();
-            });
-
-            this.modal.find('.modal-navigation-right').click(event => {
-              event.preventDefault();
-              this.attachToRight();
-            });
-
             switch (this.config.attached) {
             case 'LEFT':
               this.attachToLeft();
@@ -301,16 +144,9 @@ angular.
               this.attachToRight();
             }
 
-            const clearEmployeeList = () => {
-              employeeNameField.val('');
-              employeeIDField.val('');
-              employeeList.html('');
-              form.find('.glyphicon-remove--employee').remove();
-            };
-
             form.find('.glyphicon-remove--employee').click(event => {
               event.preventDefault();
-              clearEmployeeList();
+              this.clearEmployeeList();
             });
 
             employeeNameField.keyup(() => {
@@ -337,7 +173,7 @@ angular.
                 const removeIcon = window.jQuery(removeEmployeeIcon);
                 removeIcon.click(event => {
                   event.preventDefault();
-                  clearEmployeeList();
+                  this.clearEmployeeList();
                 });
                 employeeFieldContainer.append(removeIcon);
               }
@@ -353,13 +189,13 @@ angular.
 
             form.submit(event => {
               event.preventDefault();
-              if (!emptyIDValidation() || !uniqueIDValidation()) return;
-              updateSeat();
+              if (!this.emptyIDValidation() || !this.uniqueIDValidation()) return;
+              this.updateSeat();
             });
 
             deleteBtn.click(event => {
               event.preventDefault();
-              removeSeat();
+              this.removeSeat();
             });
           };
 
@@ -372,6 +208,71 @@ angular.
           $timeout(() => {
             this.modal.iziModal(seatEditModal);
           }, 0);
+        };
+
+
+        this.updateSeat = () => {
+          let newSeat = Object.assign({}, this.seat);
+          newSeat.title = this.modal.find('input[name="title"]').val();
+          newSeat.id = this.modal.find('input[name="seatID"]').val();
+          newSeat.employeeID = this.modal.find('input[name="employeeID"]').val();
+
+          $scope.$apply(() => {
+            Floor(floorID).updateSeat(this.seat.id, newSeat);
+          });
+          this.mapcanvas.updateSeat(this.seat.id, newSeat);
+          this.seat = undefined;
+          this.modal.iziModal('close');
+        };
+
+
+        this.removeSeat = () => {
+          this.mapcanvas.removeSeat(this.seat);
+          $scope.$apply(() => {
+            Floor(floorID).removeSeat(this.seat);
+          });
+          this.seat = undefined;
+          this.modal.iziModal('close');
+        };
+
+
+        this.emptyIDValidation = () => {
+          let valid = true;
+          this.modal.find('input[required]').each(function() {
+            if (!this.value.length) valid = false;
+          });
+          if (!valid) {
+            this.addNotification({
+              status: 'ERROR',
+              msg: 'Fill all required fields',
+              code: notificationCodes.requiredField
+            });
+          }
+          return valid;
+        };
+
+
+        this.uniqueIDValidation = () => {
+          let valid = true;
+          let seatID = this.modal.find('input[name="seatID"]').val();
+          if (seatID == this.seat.id) return valid;
+          valid = Floor(floorID).getSeats().find(seat => seat.id == seatID) == undefined;
+          if (!valid) {
+            this.addNotification({
+              status: 'ERROR',
+              msg: 'Enter unique seat ID',
+              code: notificationCodes.uniqueField
+            });
+          }
+          return valid;
+        };
+
+
+        this.clearEmployeeList = () => {
+          this.modal.find('input[name="userName"]').val('');
+          this.modal.find('input[name="employeeID"]').val('');
+          this.modal.find('.modal-employee-list').html('');
+          this.modal.find('.glyphicon-remove--employee').remove();
         };
 
 
@@ -415,16 +316,21 @@ angular.
           }, modalNotificationDelay);
         };
 
+
         this.attachToLeft = () => {
           this.modal.css({
             'left': modalWidth/2 + sideIndent,
             'right': 'auto',
             'margin-left': '0 !important',
           });
-          this.modal.find('.modal-navigation-left').css('display', 'none');
-          this.modal.find('.modal-navigation-right').css('display', 'block');
+          this.modal.find('.modal-navigation-left').css('display', 'none').off('click');
+          this.modal.find('.modal-navigation-right').css('display', 'block').click(event => {
+            event.preventDefault();
+            this.attachToRight();
+          });
           this.config.attached = 'LEFT';
         };
+
 
         this.attachToRight = () => {
           this.modal.css({
@@ -432,9 +338,120 @@ angular.
             'right': modalWidth/2 + sideIndent,
             'margin-right': '0 !important',
           });
-          this.modal.find('.modal-navigation-left').css('display', 'block');
-          this.modal.find('.modal-navigation-right').css('display', 'none');
+          this.modal.find('.modal-navigation-left').css('display', 'block').click(event => {
+            event.preventDefault();
+            this.attachToLeft();
+          });
+          this.modal.find('.modal-navigation-right').css('display', 'none').off('click');
           this.config.attached = 'RIGHT';
+        };
+
+
+        this.getDetailsTemplate = () => {
+          const hasEmployee = this.seat.employeeID != undefined;
+          const employee = this.getEmployee(this.seat.employeeID);
+          return `
+            <form class="modal-form form-horizontal" autocomplete="off">
+              <div class="form-group">
+                <label class="col-xs-4 control-label col-thinpad-right">Seat title</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <p class="modal-input-value">${this.seat.title ? this.seat.title : '<i>untitled</i>'}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-xs-4 control-label col-thinpad-right">Seat ID</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <p class="modal-input-value">${this.seat.id}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-xs-4 control-label col-thinpad-right">Occupant</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <p class="modal-input-value">${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : '<i>free</i>'}</p>
+                </div>
+              </div>
+            </form>
+            <div class="modal-notification-container">
+              <span class="modal-notification-msg"></span>
+            </div>
+            <span class="modal-navigation modal-navigation-left"></span>
+            <span class="modal-navigation modal-navigation-right"></span>
+          `;
+        };
+
+
+        this.getEditTemplate = () => {
+          const hasEmployee = this.seat.employeeID != undefined;
+          const employee = this.getEmployee(this.seat.employeeID);
+          return `
+            <form class="modal-form form-horizontal" autocomplete="off" novalidate>
+              <div class="form-group">
+                <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <input
+                    type="text"
+                    name="title"
+                    class="form-control modal-form-control"
+                    value="${this.seat.title ? this.seat.title : ''}"
+                    placeholder="untitled"
+                    tabindex="21"
+                    id="inputSeat1">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">*Seat ID</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <input
+                    type="text"
+                    name="seatID"
+                    class="form-control modal-form-control"
+                    value="${this.seat.id}"
+                    placeholder="Unique seat ID"
+                    tabindex="22"
+                    required
+                    id="inputSeat2">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <div class="modal-form-control-container modal-form-control-container--employee">
+                    <input
+                      type="text"
+                      name="userName"
+                      class="form-control modal-form-control modal-form-control--employee"
+                      value="${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : ''}"
+                      placeholder="free"
+                      tabindex="23"
+                      id="inputSeat3">
+                    ${hasEmployee && employee ? removeEmployeeIcon : ''}
+                  </div>
+
+                  <input
+                    type="hidden"
+                    name="employeeID"
+                    value="${hasEmployee ? this.seat.employeeID : ''}"
+                    class="hidden">
+                  <div class="modal-employee-list-container">
+                    <ul class="modal-employee-list"></ul>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group modal-form-group--last">
+                <div class="col-xs-6 col-thinpad-right">
+                  <button type="button" id="modal-delete-btn" class="btn btn-danger modal-btn-control" tabindex="25">Delete</button>
+                </div>
+                <div class="col-xs-6 col-thinpad-left">
+                  <button type="submit" class="btn btn-default modal-btn-control" tabindex="24">Save</button>
+                </div>
+              </div>
+            </form>
+            <div class="modal-notification-container">
+              <span class="modal-notification-msg"></span>
+            </div>
+            <span class="modal-navigation modal-navigation-left"></span>
+            <span class="modal-navigation modal-navigation-right"></span>
+          `;
         };
       }
     ],
