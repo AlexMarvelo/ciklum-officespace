@@ -23,9 +23,13 @@ angular.
       <div class="container homepage">
         <div class="row">
           <div class="col-sm-3 col-sm-push-9">
+            <div ng-if="!$ctrl.floors.length">
+              <a ui-sref="admin" class="btn btn-default" style="width:100%">Create floors</a>
+            </div>
             <div class="list-group">
               <a ng-repeat="floor in $ctrl.floors" ui-sref="floor({floorID: floor.id})" class="list-group-item">{{floor.title}}</a>
             </div>
+
           </div>
 
           <div class="col-sm-9 col-sm-pull-3">
