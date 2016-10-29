@@ -62,7 +62,7 @@ angular.
           break;
         case codes.success:
           newNotification = {
-            msg: 'Server request was executed successfully',
+            msg: 'Request was executed successfully',
             type: 'success',
             code: codes.success
           };
@@ -104,14 +104,14 @@ angular.
           break;
         case codes.idRequired:
           newNotification = {
-            msg: 'ID is required one. Please, check this',
+            msg: 'ID is required. Please, check this',
             type: 'danger',
             code: codes.idRequired
           };
           break;
         case codes.idUnique:
           newNotification = {
-            msg: 'ID field must be unique. Please, check it',
+            msg: 'ID must be unique. Please, check it',
             type: 'danger',
             code: codes.idUnique
           };
