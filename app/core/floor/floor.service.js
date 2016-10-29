@@ -23,12 +23,20 @@ angular.
 
       const get = () => {
         const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
         return this.floors[floorID] || initFloorState;
       };
 
 
       const getSeats = () => {
         const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
         if (!this.floors[floorID]) this.floors[floorID] = initFloorState;
         return this.floors[floorID].seats;
       };
@@ -36,61 +44,118 @@ angular.
 
       const addSeat = (seat) => {
         const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
+        if (seat.id == undefined) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
         if (!this.floors[floorID]) this.floors[floorID] = initFloorState;
         this.floors[floorID].seats.push(seat);
-        $log.debug(`- add seat to ${floorID} floor with id: ${seat.id}`);
         localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(`- add seat to ${floorID} floor with id: ${seat.id}`);
       };
 
 
-      const updateSeat = (seatID, newSeat) => {
+      const updateSeat = (seatID, newSeat = {}) => {
         const floorID = this.floorID;
-        let seat = this.floors[floorID].seats.find(s => s.id == seatID);
-        if (seat) {
-          let seatIndex = this.floors[floorID].seats.indexOf(seat);
-          this.floors[floorID].seats.splice(seatIndex, 1, newSeat);
-          localStorageService.set('floors', this.floors);
-          $log.debug(`- update seat ${seatID} on ${floorID}`);
-        } else {
-          $log.error(`- cant\'t update: seat ${seatID} not found on floor ${floorID}`);
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
         }
+        if (newSeat.id == undefined) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        let seat = this.floors[floorID].seats.find(s => s.id == seatID);
+        if (!seat) {
+          Notifications.add(Notifications.codes.seatNotFound);
+          return;
+        }
+        let seatIndex = this.floors[floorID].seats.indexOf(seat);
+        this.floors[floorID].seats.splice(seatIndex, 1, newSeat);
+        localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(`- update seat ${seatID} on ${floorID}`);
       };
 
 
-      const removeSeat = (seat = {id: undefined}) => {
+      const removeSeat = (seat = {}) => {
         const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
+        if (seat.id == undefined) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
         if (this.activeSeat.id == seat.id) setActiveSeat(undefined);
         this.floors[floorID].seats = this.floors[floorID].seats.filter(s => s.id != seat.id);
-        if (seat.id) $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
         localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
       };
 
 
       const cleanSeats = () => {
         const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
         if (!this.floors[floorID]) return;
         this.floors[floorID].seats = [];
         localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(`- clean all seats om ${floorID} floor`);
       };
 
 
-      const getActiveSeat = () => this.activeSeat;
+      const getActiveSeat = () => {
+        const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
+        return this.activeSeat;
+      };
 
 
       const setActiveSeat = (activeSeat) => {
         const floorID = this.floorID;
-        if (activeSeat && activeSeat.id != undefined) {
-          this.activeSeat = this.floors[floorID].seats.find(seat => seat.id == activeSeat.id);
-          $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${floorID}`);
-        } else {
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
+        if (!activeSeat) {
           if (this.activeSeat) $log.debug(`- unset active seat on the floor ${floorID}`);
           this.activeSeat = undefined;
+          return;
         }
+        if (activeSeat.id == undefined) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        const targetSeat = this.floors[floorID].seats.find(seat => seat.id == activeSeat.id);
+        if (!targetSeat) {
+          Notifications.add(Notifications.codes.seatNotFound);
+          return;
+        }
+        this.activeSeat = targetSeat;
+        $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${floorID}`);
       };
 
 
       const getConfig = () => {
         const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
         const floor = this.floors[floorID];
         if (!floor.config) return { mapSrc: '', width: defaultWidth };
         return {
@@ -104,6 +169,10 @@ angular.
 
       const setConfig = (config) => {
         const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
         if (!config.id) {
           Notifications.add(Notifications.codes.idRequired);
           return;
@@ -152,6 +221,10 @@ angular.
       const removeFloor = () => {
         const floorID = this.floorID;
         if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
+        if (!floorID) {
           Notifications.add(Notifications.codes.idRequired);
           return;
         }
@@ -162,7 +235,7 @@ angular.
       };
 
 
-      return (floorID = 'floor19') => {
+      return (floorID) => {
         this.floorID = floorID;
         return {
           get,

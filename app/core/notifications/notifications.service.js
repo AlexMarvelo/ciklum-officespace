@@ -18,6 +18,8 @@ angular.
         tooCloseSeat: 421,
         idRequired: 422,
         idUnique: 423,
+        seatNotFound: 424,
+        floorIDRequired: 425,
       };
       const disabled = ['success'];
 
@@ -112,6 +114,20 @@ angular.
             msg: 'ID field must be unique. Please, check it',
             type: 'danger',
             code: codes.idUnique
+          };
+          break;
+        case codes.seatNotFound:
+          newNotification = {
+            msg: 'Seat with such ID wasn\'t found',
+            type: 'danger',
+            code: codes.seatNotFound
+          };
+          break;
+        case codes.floorIDRequired:
+          newNotification = {
+            msg: 'Floor ID is required for this action. Check it',
+            type: 'danger',
+            code: codes.floorIDRequired
           };
           break;
         }
