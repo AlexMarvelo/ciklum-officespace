@@ -94,18 +94,71 @@ angular.
         const floor = this.floors[floorID];
         if (!floor.config) return { mapSrc: '', width: defaultWidth };
         return {
+          id: floor.config.id || '',
+          title: floor.config.title || '',
           mapSrc: floor.config.mapSrc || '',
           width: floor.config.width || defaultWidth,
         };
       };
 
+
       const setConfig = (config) => {
         const floorID = this.floorID;
-        let floor = this.floors[floorID];
-        if (!floor.config) floor.config = { mapSrc: '', width: defaultWidth };
-        floor.config.mapSrc = config.mapSrc || floor.config.mapSrc;
-        floor.config.width = config.width || floor.config.width;
+        if (!config.id) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        if (!config.id.length) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        for (let fID in this.floors) {
+          if (fID == config.id && fID != floorID) {
+            Notifications.add(Notifications.codes.idUnique);
+            return;
+          }
+        }
+        let floor;
+        if (!this.floors[floorID]) {
+          floor = this.floors[config.id] = initFloorState;
+        } else if (floorID != config.id) {
+          floor = this.floors[config.id] = Object.assign({}, this.floors[floorID]);
+          delete this.floors[floorID];
+        } else {
+          floor = this.floors[floorID];
+        }
+        if (!floor.config) floor.config = {};
+        floor.config.id = config.id;
+        floor.config.title = config.title;
+        floor.config.mapSrc = config.mapSrc;
+        floor.config.width = config.width || defaultWidth;
         localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(`- set/update ${floorID} floor config`);
+      };
+
+
+      const getAllConfigs = () => {
+        let result = [];
+        for (let floorID in this.floors) {
+          let config = Object.assign({}, this.floors[floorID].config);
+          config.id = floorID;
+          result.push(config);
+        }
+        return result;
+      };
+
+
+      const removeFloor = () => {
+        const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        delete this.floors[floorID];
+        localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(`- remove ${floorID} floor`);
       };
 
 
@@ -123,6 +176,8 @@ angular.
           serverRequest,
           getConfig,
           setConfig,
+          getAllConfigs,
+          removeFloor,
         };
       };
     }

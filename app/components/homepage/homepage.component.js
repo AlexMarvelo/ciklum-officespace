@@ -3,13 +3,19 @@
 angular.
   module('homepage').
   component('homepage', {
-    controller: [
-      function HomepageCtrl() {
-        this.floors = [{
-          title: 'Floor #19',
-          id: 'floor19',
-        }];
-        this.$onInit = () => {};
+    controller: ['Floor',
+      function HomepageCtrl(Floor) {
+        this.floors = Floor().getAllConfigs()
+          .map(config => {
+            config.title = config.title || config.id;
+            return config;
+          })
+          .sort((a, b) => {
+            if (a.title < b.title) return -1;
+            if (a.title > b.title) return 1;
+            return 0;
+          });
+
       }
     ],
 

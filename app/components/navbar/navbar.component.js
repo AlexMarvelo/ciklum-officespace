@@ -16,6 +16,10 @@ angular.
             state: 'login',
             title: 'Login',
           },
+          adminBtn: {
+            link: '/admin',
+            state: 'admin',
+          },
           signupBtn: {
             link: '/signup',
             state: 'signup',
@@ -78,7 +82,7 @@ angular.
           </div>
           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
-              <li ng-if="$ctrl.logined == true">  <a>Hello, {{$ctrl.user.local.email}}</a></li>
+              <li ng-if="$ctrl.logined == true">  <a ui-sref="{{$ctrl.static.adminBtn.state}}">Hello, {{$ctrl.user.local.email}}</a></li>
               <li ng-if="$ctrl.logined == true">  <a href="#" ng-click="$ctrl.toggleDrawMode($event)" class="{{$ctrl.drawMode ? 'active' : ''}}">{{$ctrl.drawMode ? 'Exit drawing' : 'New seat'}}</a></li>
               <li ng-if="$ctrl.logined == true">  <a href="#" ng-click="$ctrl.logout($event)">{{$ctrl.static.logoutBtn.title}}</a></li>
               <li ng-if="$ctrl.logined == false"> <a ui-sref="{{$ctrl.static.loginBtn.state}}">{{$ctrl.static.loginBtn.title}}</a></li>
