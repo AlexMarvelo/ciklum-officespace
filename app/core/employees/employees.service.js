@@ -15,6 +15,7 @@ angular.
 
       this.employees = [];
 
+
       serverRequest.get(res => {
         Notifications.add(res.status);
         if (res.status == Notifications.codes.success) {
@@ -25,7 +26,9 @@ angular.
         }
       });
 
+
       const get = () => this.employees;
+
 
       return {
         get,

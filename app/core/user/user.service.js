@@ -32,12 +32,15 @@ angular.
         }
       });
 
+
       const authorized = () => this.user != undefined;
+
 
       const init = () => {
         this.user = localStorageService.get('user') || undefined;
         update();
       };
+
 
       const update = () => {
         serverRequest.get(user => {
@@ -51,19 +54,25 @@ angular.
         });
       };
 
+
       const set = (user) => {
         this.user = user;
         localStorageService.set('user', this.user);
       };
 
+
       const get = () => this.user;
+
 
       const clear = () => {
         this.user = undefined;
         localStorageService.set('user', this.user);
       };
 
+
       const getMode = () => this.mode;
+
+
       const setMode = mode => {
         this.mode = mode;
         if (this.mode) {
@@ -72,6 +81,7 @@ angular.
           $log.debug('- unset user mode');
         }
       };
+
 
       return {
         init,

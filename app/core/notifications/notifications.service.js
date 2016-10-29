@@ -24,8 +24,10 @@ angular.
       this.notifications = [];
       this.notificationsLog = [];
 
+
       const get = () => this.notifications;
       const getLog = () => this.notificationsLog;
+
 
       const add = (code, notification) => {
         if (notification) {
@@ -122,6 +124,7 @@ angular.
         $timeout(() => remove(newNotification), timeout);
       };
 
+
       const remove = (notification) => {
         if (!notification || !notification.timestamp) return;
         let prevAmount = this.notifications.length;
@@ -130,6 +133,7 @@ angular.
           $log.debug(`- remove notification (code ${notification.code}, timestamp ${notification.timestamp})`);
         }
       };
+
 
       return {
         get,
