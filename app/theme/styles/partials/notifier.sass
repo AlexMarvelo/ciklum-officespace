@@ -1,50 +1,7 @@
-.notifier
-  &-container
-    position: fixed
-    width: 100%
-    top: 70px
-    left: 0
-    z-index: 100
-    > .container
-      position: relative
-  &-centeredColumn
-    position: absolute
-    width: 100%
-    max-width: 555px
-    left: 50%
-    transform: translateX(-50%)
-  &-alert
-    position: relative
-    padding-right: 30px
-    margin-bottom: 0
-    box-shadow: 0 0 4px rgba(0,0,0,.4)
-    &-container
-      padding: 10px
-    .glyphicon-remove
-      position: absolute
-      right: 8px
-      display: inline-block
-      top: 50%
-      transform: translateY(-50%)
-      cursor: pointer
-
-// Animations
-.notifier-alert-container
-  transition: 0.3s ease-out height, 0.3s ease-out opacity, 0.3s ease-out padding-top, 0.3s ease-out padding-bottom
-  &.ng-enter,
-  &.ng-move
-    height: 0
-    opacity: 0
-    overflow: hidden
-  &.ng-enter.ng-enter-active,
-  &.ng-move.ng-move-active
-    height: 72px
-    opacity: 1
-  &.ng-leave
-    opacity: 1
-    overflow: hidden
-  &.ng-leave.ng-leave-active
-    height: 0
-    opacity: 0
-    padding-top: 0
-    padding-bottom: 0
+#modal-alert
+  border-top-left-radius: 3px
+  border-top-right-radius: 3px
+  padding-bottom: 0
+  .iziModal
+    &-wrap
+      display: none

@@ -1,12 +1,13 @@
 'use strict';
 
 const colors = require('../../config/colors.json');
+const confirm = require('../confirm/confirm.core');
 
 angular.
   module('modal').
   component('modal', {
-    controller: ['$scope', '$rootScope', '$stateParams', '$timeout', 'Floor', 'Employees', 'User',
-      function ModalCtrl($scope, $rootScope, $stateParams, $timeout, Floor, Employees, User) {
+    controller: ['$scope', '$rootScope', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'User',
+      function ModalCtrl($scope, $rootScope, $stateParams, $timeout, $log, Floor, Employees, User) {
         const floorID = $stateParams.floorID;
         const modalWidth = 300;
         const modalNotificationDelay = 300;
@@ -23,11 +24,14 @@ angular.
           padding: 15,
           zindex: 1010,
           history: false,
+          closeOnEscape: false,
           focusInput: false,
           autoOpen: true,
+          navigateArrows: false,
+          navigateCaption: false,
           onClosing: () => {
             $scope.$apply(() => {
-              Floor(floorID).setActiveSeatID(undefined);
+              Floor(floorID).setActiveSeat(undefined);
             });
             this.mapcanvas.deactivateAllSeats();
           },
@@ -134,6 +138,7 @@ angular.
             const employeeNameField = form.find('input[name="userName"]');
             const employeeIDField = form.find('input[name="employeeID"]');
             const employeeFieldContainer = form.find('.modal-form-control-container--employee');
+            const unsetEmployeeIcon = form.find('.glyphicon-remove--employee');
             const employeeList = form.find('.modal-employee-list');
 
             switch (this.config.attached) {
@@ -144,9 +149,10 @@ angular.
               this.attachToRight();
             }
 
-            form.find('.glyphicon-remove--employee').click(event => {
+            unsetEmployeeIcon.click(event => {
               event.preventDefault();
-              this.clearEmployeeList();
+              unsetEmployeeIcon.blur();
+              this.unsetEmployee();
             });
 
             employeeNameField.keyup(() => {
@@ -168,14 +174,15 @@ angular.
               employeeNameField.val(`${employee.firstName} ${employee.lastName}`);
               employeeIDField.val(employee.id);
               employeeList.html('');
-              const removeIcon = form.find('.glyphicon-remove--employee');
-              if (!removeIcon.length) {
-                const removeIcon = window.jQuery(removeEmployeeIcon);
-                removeIcon.click(event => {
+              const unsetEmployeeIcon = form.find('.glyphicon-remove--employee');
+              if (!unsetEmployeeIcon.length) {
+                const unsetEmployeeIcon = window.jQuery(removeEmployeeIcon);
+                unsetEmployeeIcon.click(event => {
                   event.preventDefault();
-                  this.clearEmployeeList();
+                  unsetEmployeeIcon.blur();
+                  this.unsetEmployee();
                 });
-                employeeFieldContainer.append(removeIcon);
+                employeeFieldContainer.append(unsetEmployeeIcon);
               }
             });
 
@@ -195,6 +202,7 @@ angular.
 
             deleteBtn.click(event => {
               event.preventDefault();
+              deleteBtn.blur();
               this.removeSeat();
             });
           };
@@ -212,10 +220,12 @@ angular.
 
 
         this.updateSeat = () => {
+          const employeeIDField = this.modal.find('input[name="employeeID"]');
+
           let newSeat = Object.assign({}, this.seat);
           newSeat.title = this.modal.find('input[name="title"]').val();
           newSeat.id = this.modal.find('input[name="seatID"]').val();
-          newSeat.employeeID = this.modal.find('input[name="employeeID"]').val();
+          newSeat.employeeID = employeeIDField.val().length ? employeeIDField.val() : undefined;
 
           $scope.$apply(() => {
             Floor(floorID).updateSeat(this.seat.id, newSeat);
@@ -227,12 +237,34 @@ angular.
 
 
         this.removeSeat = () => {
-          this.mapcanvas.removeSeat(this.seat);
-          $scope.$apply(() => {
-            Floor(floorID).removeSeat(this.seat);
-          });
-          this.seat = undefined;
-          this.modal.iziModal('close');
+          let questionText = 'Are you sure you want to remove this seat?';
+          const employee = this.getEmployee(this.modal.find('input[name="employeeID"]').val());
+          if (employee) questionText += ` ${employee.firstName} ${employee.lastName} will lose the seat.`;
+          confirm({
+            msg: questionText
+          })
+          .then(() => {
+            this.mapcanvas.removeSeat(this.seat);
+            $scope.$apply(() => {
+              Floor(floorID).removeSeat(this.seat);
+            });
+            this.seat = undefined;
+            this.modal.iziModal('close');
+          }, () => {})
+          .catch(error => $log.error(error));
+        };
+
+
+        this.unsetEmployee = () => {
+          const employee = this.getEmployee(this.modal.find('input[name="employeeID"]').val());
+          let questionText = `Are you sure you want to remove ${employee.firstName} ${employee.lastName} from this seat?`;
+          confirm({
+            msg: questionText
+          })
+          .then(() => {
+            this.clearEmployeeList();
+          }, () => {})
+          .catch(error => $log.error(error));
         };
 
 
@@ -351,7 +383,7 @@ angular.
           const hasEmployee = this.seat.employeeID != undefined;
           const employee = this.getEmployee(this.seat.employeeID);
           return `
-            <form class="modal-form form-horizontal" autocomplete="off">
+            <form class="modal-form form-horizontal" autocomplete="off" novalidate>
               <div class="form-group">
                 <label class="col-xs-4 control-label col-thinpad-right">Seat title</label>
                 <div class="col-xs-8 col-thinpad-left">

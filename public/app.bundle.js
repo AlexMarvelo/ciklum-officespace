@@ -51,7 +51,7 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";__webpack_require__(2),__webpack_require__(3),__webpack_require__(12),__webpack_require__(14),window.jQuery=__webpack_require__(16),window.SVG=__webpack_require__(17),__webpack_require__(18),__webpack_require__(19),__webpack_require__(20),__webpack_require__(32),__webpack_require__(34),__webpack_require__(36),__webpack_require__(39),__webpack_require__(41),angular.module("CiklumSpace",[__webpack_require__(50),__webpack_require__(51),__webpack_require__(53),"core","navbar","notifier","entryForm","homepage","floor"]),__webpack_require__(55),angular.bootstrap(document,["CiklumSpace"]);
+	"use strict";__webpack_require__(2),__webpack_require__(3),__webpack_require__(12),__webpack_require__(14),window.jQuery=__webpack_require__(16),window.SVG=__webpack_require__(17),__webpack_require__(18),__webpack_require__(19),__webpack_require__(20),__webpack_require__(21),__webpack_require__(33),__webpack_require__(35),__webpack_require__(38),__webpack_require__(41),__webpack_require__(43),__webpack_require__(54),angular.module("CiklumSpace",[__webpack_require__(56),__webpack_require__(57),__webpack_require__(59),"core","navbar","notifier","entryForm","homepage","floor","admin"]),__webpack_require__(61),angular.bootstrap(document,["CiklumSpace"]);
 
 /***/ },
 /* 2 */
@@ -47438,6 +47438,232 @@
 /* 18 */
 /***/ function(module, exports) {
 
+	/*! svg.draggable.js - v2.2.0 - 2016-05-21
+	* https://github.com/wout/svg.draggable.js
+	* Copyright (c) 2016 Wout Fierens; Licensed MIT */
+	;(function() {
+
+	  // creates handler, saves it
+	  function DragHandler(el){
+	    el.remember('_draggable', this)
+	    this.el = el
+	  }
+
+
+	  // Sets new parameter, starts dragging
+	  DragHandler.prototype.init = function(constraint, val){
+	    var _this = this
+	    this.constraint = constraint
+	    this.value = val
+	    this.el.on('mousedown.drag', function(e){ _this.start(e) })
+	    this.el.on('touchstart.drag', function(e){ _this.start(e) })
+	  }
+
+	  // transforms one point from screen to user coords
+	  DragHandler.prototype.transformPoint = function(event, offset){
+	      event = event || window.event
+	      var touches = event.changedTouches && event.changedTouches[0] || event
+	      this.p.x = touches.pageX - (offset || 0)
+	      this.p.y = touches.pageY
+	      return this.p.matrixTransform(this.m)
+	  }
+	  
+	  // gets elements bounding box with special handling of groups, nested and use
+	  DragHandler.prototype.getBBox = function(){
+
+	    var box = this.el.bbox()
+
+	    if(this.el instanceof SVG.Nested) box = this.el.rbox()
+	    
+	    if (this.el instanceof SVG.G || this.el instanceof SVG.Use || this.el instanceof SVG.Nested) {
+	      box.x = this.el.x()
+	      box.y = this.el.y()
+	    }
+
+	    return box
+	  }
+
+	  // start dragging
+	  DragHandler.prototype.start = function(e){
+
+	    // check for left button
+	    if(e.type == 'click'|| e.type == 'mousedown' || e.type == 'mousemove'){
+	      if((e.which || e.buttons) != 1){
+	          return
+	      }
+	    }
+	  
+	    var _this = this
+
+	    // fire beforedrag event
+	    this.el.fire('beforedrag', { event: e, handler: this })
+
+	    // search for parent on the fly to make sure we can call
+	    // draggable() even when element is not in the dom currently
+	    this.parent = this.parent || this.el.parent(SVG.Nested) || this.el.parent(SVG.Doc)
+	    this.p = this.parent.node.createSVGPoint()
+
+	    // save current transformation matrix
+	    this.m = this.el.node.getScreenCTM().inverse()
+
+	    var box = this.getBBox()
+	    
+	    var anchorOffset;
+	    
+	    // fix text-anchor in text-element (#37)
+	    if(this.el instanceof SVG.Text){
+	      anchorOffset = this.el.node.getComputedTextLength();
+	        
+	      switch(this.el.attr('text-anchor')){
+	        case 'middle':
+	          anchorOffset /= 2;
+	          break
+	        case 'start':
+	          anchorOffset = 0;
+	          break;
+	      }
+	    }
+	    
+	    this.startPoints = {
+	      // We take absolute coordinates since we are just using a delta here
+	      point: this.transformPoint(e, anchorOffset),
+	      box:   box
+	    }
+	    
+	    // add drag and end events to window
+	    SVG.on(window, 'mousemove.drag', function(e){ _this.drag(e) })
+	    SVG.on(window, 'touchmove.drag', function(e){ _this.drag(e) })
+	    SVG.on(window, 'mouseup.drag', function(e){ _this.end(e) })
+	    SVG.on(window, 'touchend.drag', function(e){ _this.end(e) })
+
+	    // fire dragstart event
+	    this.el.fire('dragstart', {event: e, p: this.startPoints.point, m: this.m, handler: this})
+
+	    // prevent browser drag behavior
+	    e.preventDefault()
+
+	    // prevent propagation to a parent that might also have dragging enabled
+	    e.stopPropagation();
+	  }
+
+	  // while dragging
+	  DragHandler.prototype.drag = function(e){
+
+	    var box = this.getBBox()
+	      , p   = this.transformPoint(e)
+	      , x   = this.startPoints.box.x + p.x - this.startPoints.point.x
+	      , y   = this.startPoints.box.y + p.y - this.startPoints.point.y
+	      , c   = this.constraint
+
+	    var event = new CustomEvent('dragmove', {
+	        detail: {
+	            event: e
+	          , p: p
+	          , m: this.m
+	          , handler: this
+	        }
+	      , cancelable: true
+	    })
+	      
+	    this.el.fire(event)
+	    
+	    if(event.defaultPrevented) return p
+
+	    // move the element to its new position, if possible by constraint
+	    if (typeof c == 'function') {
+
+	      var coord = c.call(this.el, x, y, this.m)
+
+	      // bool, just show us if movement is allowed or not
+	      if (typeof coord == 'boolean') {
+	        coord = {
+	          x: coord,
+	          y: coord
+	        }
+	      }
+
+	      // if true, we just move. If !false its a number and we move it there
+	      if (coord.x === true) {
+	        this.el.x(x)
+	      } else if (coord.x !== false) {
+	        this.el.x(coord.x)
+	      }
+
+	      if (coord.y === true) {
+	        this.el.y(y)
+	      } else if (coord.y !== false) {
+	        this.el.y(coord.y)
+	      }
+
+	    } else if (typeof c == 'object') {
+
+	      // keep element within constrained box
+	      if (c.minX != null && x < c.minX)
+	        x = c.minX
+	      else if (c.maxX != null && x > c.maxX - box.width){
+	        x = c.maxX - box.width
+	      }if (c.minY != null && y < c.minY)
+	        y = c.minY
+	      else if (c.maxY != null && y > c.maxY - box.height)
+	        y = c.maxY - box.height
+
+	      this.el.move(x, y)
+	    }
+	    
+	    // so we can use it in the end-method, too
+	    return p
+	  }
+
+	  DragHandler.prototype.end = function(e){
+
+	    // final drag
+	    var p = this.drag(e);
+
+	    // fire dragend event
+	    this.el.fire('dragend', { event: e, p: p, m: this.m, handler: this })
+
+	    // unbind events
+	    SVG.off(window, 'mousemove.drag')
+	    SVG.off(window, 'touchmove.drag')
+	    SVG.off(window, 'mouseup.drag')
+	    SVG.off(window, 'touchend.drag')
+
+	  }
+
+	  SVG.extend(SVG.Element, {
+	    // Make element draggable
+	    // Constraint might be an object (as described in readme.md) or a function in the form "function (x, y)" that gets called before every move.
+	    // The function can return a boolean or an object of the form {x, y}, to which the element will be moved. "False" skips moving, true moves to raw x, y.
+	    draggable: function(value, constraint) {
+
+	      // Check the parameters and reassign if needed
+	      if (typeof value == 'function' || typeof value == 'object') {
+	        constraint = value
+	        value = true
+	      }
+
+	      var dragHandler = this.remember('_draggable') || new DragHandler(this)
+
+	      // When no parameter is given, value is true
+	      value = typeof value === 'undefined' ? true : value
+
+	      if(value) dragHandler.init(constraint || {}, value)
+	      else {
+	        this.off('mousedown.drag')
+	        this.off('touchstart.drag')
+	      }
+
+	      return this
+	    }
+
+	  })
+
+	}).call(this);
+
+/***/ },
+/* 19 */
+/***/ function(module, exports) {
+
 	/*!
 	 * Bootstrap v3.3.7 (http://getbootstrap.com)
 	 * Copyright 2011-2016 Twitter, Inc.
@@ -49818,7 +50044,7 @@
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/*
@@ -50950,19 +51176,19 @@
 	}).call(this, window.jQuery);
 
 /***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";angular.module("core",["core.status","core.user","core.notifications","core.employees","core.floor"]),__webpack_require__(21),__webpack_require__(24),__webpack_require__(26),__webpack_require__(28),__webpack_require__(30);
-
-/***/ },
 /* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";__webpack_require__(22),angular.module("core.status",["ngResource"]),__webpack_require__(23);
+	"use strict";angular.module("core",["core.status","core.user","core.notifications","core.employees","core.floor"]),__webpack_require__(22),__webpack_require__(25),__webpack_require__(27),__webpack_require__(29),__webpack_require__(31);
 
 /***/ },
 /* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";__webpack_require__(23),angular.module("core.status",["ngResource"]),__webpack_require__(24);
+
+/***/ },
+/* 23 */
 /***/ function(module, exports) {
 
 	/**
@@ -51831,173 +52057,208 @@
 
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports) {
 
 	"use strict";angular.module("core.status").factory("Status",["$resource","CONFIG",function(o,t){var n=o(("production"==t.env?t.appDomain_remote:t.appDomain_local)+"/status/:action",{action:"dbconnection"},{dbconnection:{method:"GET",params:{action:"dbconnection"}}});return{serverRequest:n}}]);
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("core.user",[]),__webpack_require__(25);
+	"use strict";angular.module("core.user",[]),__webpack_require__(26);
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports) {
 
 	"use strict";angular.module("core.user").factory("User",["$state","$log","$resource","localStorageService","CONFIG",function(e,o,t,r,u){var n=this,i=t(("production"==u.env?u.appDomain_remote:u.appDomain_local)+"/user/:action",{action:"get"},{get:{method:"GET",params:{action:"get"}},login:{method:"POST",params:{action:"login"}},signup:{method:"POST",params:{action:"signup"}},logout:{method:"GET",params:{action:"logout"}}}),s=function(){return void 0!=n.user},a=function(){n.user=r.get("user")||void 0,c()},c=function(){i.get(function(e){return void 0==e.local?void(n.user=void 0):(n.user=e,o.debug("- Authorization init. User: "+n.user.local.email),void r.set("user",n.user))})},d=function(e){n.user=e,r.set("user",n.user)},g=function(){return n.user},m=function(){n.user=void 0,r.set("user",n.user)},l=function(){return n.mode},f=function(e){n.mode=e,n.mode?o.debug("- set user mode to "+n.mode):o.debug("- unset user mode")};return{init:a,authorized:s,clear:m,get:g,set:d,getMode:l,setMode:f,serverRequest:i}}]);
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("core.notifications",[]),__webpack_require__(27);
-
-/***/ },
-/* 27 */
-/***/ function(module, exports) {
-
-	"use strict";angular.module("core.notifications").factory("Notifications",["$timeout","$log",function(e,t){var o=this,n=4e3,i={success:200,badRequest:400,unauthorized:401,nopermission:403,notFound:404,serverError:500,dbNotConnected:503,svgNotSupported:420,tooCloseSeat:421},s=["success"];this.notifications=[],this.notificationsLog=[];var a=function(){return o.notifications},r=function(){return o.notificationsLog},c=function(a,r){if(r)return o.notifications.push(r),void t.debug(r);var c=void 0;switch(a){case i.dbNotConnected:c={msg:"Connection to local database failed. Remote one will be used",type:"warning",code:i.dbNotConnected};break;case i.unauthorized:c={msg:"Authorization faild. Please, check email & password",type:"danger",code:i.unauthorized};break;case i.nopermission:c={msg:"Sorry, action is not permited",type:"danger",code:i.nopermission};break;case i.success:c={msg:"Server request was executed successfully",type:"success",code:i.success};break;case i.serverError:c={msg:"Server request failed",type:"danger",code:i.serverError};break;case i.notFound:c={msg:"Page not found. What you are looking for?",type:"danger",code:i.notFound};break;case i.badRequest:c={msg:"The request could not be understood by the server",type:"danger",code:i.badRequest};break;case i.svgNotSupported:c={msg:"SVG drowing is not supported",type:"danger",code:i.svgNotSupported};break;case i.tooCloseSeat:c={msg:"Seat is to close to another one. You can't place it here",type:"warning",code:i.tooCloseSeat}}c&&(s.find(function(e){return i[e]==c.code})||(c.timestamp=(new Date).toISOString(),o.notifications.push(c),o.notificationsLog.push(c),t.debug("- add notification "+(r?":":"(code "+a+", timestamp "+c.timestamp+")")),e(function(){return d(c)},n)))},d=function(e){if(e&&e.timestamp){var n=o.notifications.length;o.notifications=o.notifications.filter(function(t){return t.timestamp!=e.timestamp}),n!=o.notifications.length&&t.debug("- remove notification (code "+e.code+", timestamp "+e.timestamp+")")}};return{get:a,getLog:r,add:c,remove:d,codes:i}}]);
+	"use strict";angular.module("core.notifications",[]),__webpack_require__(28);
 
 /***/ },
 /* 28 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	"use strict";angular.module("core.employees",[]),__webpack_require__(29);
+	"use strict";angular.module("core.notifications").factory("Notifications",["$timeout","$log",function(e,t){var o=this,i=4e3,s={success:200,badRequest:400,unauthorized:401,nopermission:403,notFound:404,serverError:500,dbNotConnected:503,svgNotSupported:420,tooCloseSeat:421,idRequired:422,idUnique:423,seatNotFound:424,floorIDRequired:425},n=["success"];this.notifications=[],this.notificationsLog=[];var a=function(){return o.notifications},r=function(){return o.notificationsLog},c=function(a,r){if(r)return o.notifications.push(r),void t.debug(r);var c=void 0;switch(a){case s.dbNotConnected:c={msg:"Connection to local database failed. Remote one will be used",type:"warning",code:s.dbNotConnected};break;case s.unauthorized:c={msg:"Authorization faild. Please, check email & password",type:"danger",code:s.unauthorized};break;case s.nopermission:c={msg:"Sorry, action is not permited",type:"danger",code:s.nopermission};break;case s.success:c={msg:"Request was executed successfully",type:"success",code:s.success};break;case s.serverError:c={msg:"Server request failed",type:"danger",code:s.serverError};break;case s.notFound:c={msg:"Page not found. What you are looking for?",type:"danger",code:s.notFound};break;case s.badRequest:c={msg:"The request could not be understood by the server",type:"danger",code:s.badRequest};break;case s.svgNotSupported:c={msg:"SVG drowing is not supported",type:"danger",code:s.svgNotSupported};break;case s.tooCloseSeat:c={msg:"Seat is to close to another one. You can't place it here",type:"warning",code:s.tooCloseSeat};break;case s.idRequired:c={msg:"ID is required. Please, check this",type:"danger",code:s.idRequired};break;case s.idUnique:c={msg:"ID must be unique. Please, check it",type:"danger",code:s.idUnique};break;case s.seatNotFound:c={msg:"Seat with such ID wasn't found",type:"danger",code:s.seatNotFound};break;case s.floorIDRequired:c={msg:"Floor ID is required for this action. Check it",type:"danger",code:s.floorIDRequired}}c&&(n.find(function(e){return s[e]==c.code})||(c.timestamp=(new Date).toISOString(),o.notifications.push(c),o.notificationsLog.push(c),t.debug("- add notification "+(r?":":"(code "+a+", timestamp "+c.timestamp+")")),e(function(){return d(c)},i)))},d=function(e){if(e&&e.timestamp){var i=o.notifications.length;o.notifications=o.notifications.filter(function(t){return t.timestamp!=e.timestamp}),i!=o.notifications.length&&t.debug("- remove notification (code "+e.code+", timestamp "+e.timestamp+")")}};return{get:a,getLog:r,add:c,remove:d,codes:s}}]);
 
 /***/ },
 /* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";angular.module("core.employees",[]),__webpack_require__(30);
+
+/***/ },
+/* 30 */
 /***/ function(module, exports) {
 
 	"use strict";angular.module("core.employees").factory("Employees",["$log","$resource","Notifications","CONFIG",function(e,o,t,s){var a=this,r=o(("production"==s.env?s.appDomain_remote:s.appDomain_local)+"/employees/:action",{action:"get"},{get:{method:"GET",params:{action:"get"}}});this.employees=[],r.get(function(o){t.add(o.status),o.status==t.codes.success?(a.employees=o.employees||[],e.debug("- employees fetched. amount: "+a.employees.length)):e.error(o)});var n=function(){return a.employees};return{get:n,serverRequest:r}}]);
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("core.floor",[]),__webpack_require__(31);
-
-/***/ },
-/* 31 */
-/***/ function(module, exports) {
-
-	"use strict";angular.module("core.floor").factory("Floor",["$log","$resource","localStorageService","Notifications","CONFIG",function(o,e,t,r,s){var a=this;this.floors=t.get("floors")||{};var f={seats:[]},i=e(("production"==s.env?s.appDomain_remote:s.appDomain_local)+"/employees/:action",{action:"get"},{get:{method:"GET",params:{action:"get"}}}),l=function(){var o=a.floorID;return a.floors[o]||f},n=function(){var o=a.floorID;return a.floors[o]||(a.floors[o]=f),a.floors[o].seats},c=function(e){var r=a.floorID;a.floors[r]||(a.floors[r]=f),a.floors[r].seats.push(e),o.debug("- add seat to "+r+" floor with id: "+e.id),t.set("floors",a.floors)},u=function(e,r){var s=a.floorID,f=a.floors[s].seats.find(function(o){return o.id==e});if(f){var i=a.floors[s].seats.indexOf(f);a.floors[s].seats.splice(i,1,r),t.set("floors",a.floors),o.debug("- update seat "+e+" on "+s)}else o.error("- cant't update: seat "+e+" not found on floor "+s)},d=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{id:void 0},r=a.floorID;a.activeSeat.id==e.id&&S(void 0),a.floors[r].seats=a.floors[r].seats.filter(function(o){return o.id!=e.id}),e.id&&o.debug("- remove seat "+e.id+" from floor "+r),t.set("floors",a.floors)},v=function(){var o=a.floorID;a.floors[o]&&(a.floors[o].seats=[],t.set("floors",a.floors))},g=function(){return a.activeSeat},S=function(e){e?(a.activeSeat=a.floors[a.floorID].seats.find(function(o){return o.id==e}),o.debug("- set active seat to "+a.activeSeat.id+" on the floor "+a.floorID)):(a.activeSeat&&o.debug("- unset active seat on the floor "+a.floorID),a.activeSeat=void 0)};return function(){var o=arguments.length>0&&void 0!==arguments[0]?arguments[0]:"floor19";return a.floorID=o,{get:l,getSeats:n,addSeat:c,removeSeat:d,updateSeat:u,cleanSeats:v,getActiveSeat:g,setActiveSeatID:S,serverRequest:i}}}]);
+	"use strict";angular.module("core.floor",[]),__webpack_require__(32);
 
 /***/ },
 /* 32 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	"use strict";angular.module("navbar",[]),__webpack_require__(33);
+	"use strict";angular.module("core.floor").factory("Floor",["$log","$resource","localStorageService","Notifications","CONFIG",function(o,e,d,r,i){var t=this;this.floors=d.get("floors")||{};var s={seats:[]},f=945,a=e(("production"==i.env?i.appDomain_remote:i.appDomain_local)+"/employees/:action",{action:"get"},{get:{method:"GET",params:{action:"get"}}}),n=function(){var o=t.floorID;return o?t.floors[o]||s:void r.add(r.codes.floorIDRequired)},c=function(){var o=t.floorID;return o?(t.floors[o]||(t.floors[o]=s),t.floors[o].seats):void r.add(r.codes.floorIDRequired)},l=function(e){var i=t.floorID;return i?void 0==e.id?void r.add(r.codes.idRequired):(t.floors[i]||(t.floors[i]=s),t.floors[i].seats.push(e),d.set("floors",t.floors),r.add(r.codes.success),void o.debug("- add seat to "+i+" floor with id: "+e.id)):void r.add(r.codes.floorIDRequired)},u=function(e){var i=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},s=t.floorID;if(!s)return void r.add(r.codes.floorIDRequired);if(void 0==i.id)return void r.add(r.codes.idRequired);var f=t.floors[s].seats.find(function(o){return o.id==e});if(!f)return void r.add(r.codes.seatNotFound);var a=t.floors[s].seats.indexOf(f);t.floors[s].seats.splice(a,1,i),d.set("floors",t.floors),r.add(r.codes.success),o.debug("- update seat "+e+" on "+s)},v=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},i=t.floorID;return i?void 0==e.id?void r.add(r.codes.idRequired):(t.activeSeat.id==e.id&&I(void 0),t.floors[i].seats=t.floors[i].seats.filter(function(o){return o.id!=e.id}),d.set("floors",t.floors),r.add(r.codes.success),void o.debug("- remove seat "+e.id+" from floor "+i)):void r.add(r.codes.floorIDRequired)},g=function(){var e=t.floorID;return e?void(t.floors[e]&&(t.floors[e].seats=[],d.set("floors",t.floors),r.add(r.codes.success),o.debug("- clean all seats om "+e+" floor"))):void r.add(r.codes.floorIDRequired)},D=function(){var o=t.floorID;return o?t.activeSeat:void r.add(r.codes.floorIDRequired)},I=function(e){var d=t.floorID;if(!d)return void r.add(r.codes.floorIDRequired);if(!e)return t.activeSeat&&o.debug("- unset active seat on the floor "+d),void(t.activeSeat=void 0);if(void 0==e.id)return void r.add(r.codes.idRequired);var i=t.floors[d].seats.find(function(o){return o.id==e.id});return i?(t.activeSeat=i,void o.debug("- set active seat to "+t.activeSeat.id+" on the floor "+d)):void r.add(r.codes.seatNotFound)},q=function(){var o=t.floorID;if(!o)return void r.add(r.codes.floorIDRequired);var e=t.floors[o];return e.config?{id:e.config.id||"",title:e.config.title||"",mapSrc:e.config.mapSrc||"",width:e.config.width||f}:{mapSrc:"",width:f}},S=function(e){var i=t.floorID;if(!i)return void r.add(r.codes.floorIDRequired);if(!e.id)return void r.add(r.codes.idRequired);if(!e.id.length)return void r.add(r.codes.idRequired);for(var a in t.floors)if(a==e.id&&a!=i)return void r.add(r.codes.idUnique);var n=void 0;t.floors[i]?i!=e.id?(n=t.floors[e.id]=Object.assign({},t.floors[i]),delete t.floors[i]):n=t.floors[i]:n=t.floors[e.id]=s,n.config||(n.config={}),n.config.id=e.id,n.config.title=e.title,n.config.mapSrc=e.mapSrc,n.config.width=e.width||f,d.set("floors",t.floors),r.add(r.codes.success),o.debug("- set/update "+i+" floor config")},R=function(){var o=[];for(var e in t.floors){var d=Object.assign({},t.floors[e].config);d.id=e,o.push(d)}return o},m=function(){var e=t.floorID;return e?e?(delete t.floors[e],d.set("floors",t.floors),r.add(r.codes.success),void o.debug("- remove "+e+" floor")):void r.add(r.codes.idRequired):void r.add(r.codes.floorIDRequired)};return function(o){return t.floorID=o,{get:n,getSeats:c,addSeat:l,removeSeat:v,updateSeat:u,cleanSeats:g,getActiveSeat:D,setActiveSeat:I,serverRequest:a,getConfig:q,setConfig:S,getAllConfigs:R,removeFloor:m}}}]);
 
 /***/ },
 /* 33 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("navbar").component("navbar",{controller:["$scope","$state","$log","CONFIG","User",function(t,a,n,l,e){var i=this;this.static={homeBtn:{link:"/",state:"home",title:l.appName},loginBtn:{link:"/login",state:"login",title:"Login"},signupBtn:{link:"/signup",state:"signup",title:"Sign up"},logoutBtn:{link:"/logout",title:"Logout"}},this.$onInit=function(){i.logined=!1},t.$watch(e.authorized,function(t){i.logined=t,i.user=e.get()}),this.logout=function(t){t.preventDefault(),e.serverRequest.logout(function(){n.debug("- logged out"),e.clear(),a.go("login")})},this.drawMode=!1,this.toggleDrawMode=function(t){t.preventDefault(),i.drawMode?(i.drawMode=!1,e.setMode(void 0)):(i.drawMode=!0,e.setMode("draw"))}}],template:'\n      <nav class="navbar navbar-fixed-top" role="navigation">\n        <div class="container">\n          <div class="navbar-header">\n            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">\n              <span class="sr-only">Toggle navigation</span>\n              <span class="icon-bar"></span>\n              <span class="icon-bar"></span>\n              <span class="icon-bar"></span>\n            </button>\n            <a class="navbar-brand navbar-brand-logo" ui-sref="{{$ctrl.static.homeBtn.state}}">\n              <img ng-src="/images/favicon.ico" alt="{{$ctrl.static.homeBtn.title}}">\n            </a>\n            <a class="navbar-brand" ui-sref="{{$ctrl.static.homeBtn.state}}">\n              {{$ctrl.static.homeBtn.title}}\n            </a>\n          </div>\n          <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">\n            <ul class="nav navbar-nav navbar-right">\n              <li ng-if="$ctrl.logined == true">  <a>Hello, {{$ctrl.user.local.email}}</a></li>\n              <li ng-if="$ctrl.logined == true">  <a href="#" ng-click="$ctrl.toggleDrawMode($event)" class="{{$ctrl.drawMode ? \'active\' : \'\'}}">{{$ctrl.drawMode ? \'Exit drawing\' : \'New seat\'}}</a></li>\n              <li ng-if="$ctrl.logined == true">  <a href="#" ng-click="$ctrl.logout($event)">{{$ctrl.static.logoutBtn.title}}</a></li>\n              <li ng-if="$ctrl.logined == false"> <a ui-sref="{{$ctrl.static.loginBtn.state}}">{{$ctrl.static.loginBtn.title}}</a></li>\n              <li ng-if="$ctrl.logined == false"> <a ui-sref="{{$ctrl.static.signupBtn.state}}">{{$ctrl.static.signupBtn.title}}</a></li>\n            </ul>\n          </div>\n        </div>\n      </nav>\n    '});
+	"use strict";angular.module("navbar",[]),__webpack_require__(34);
 
 /***/ },
 /* 34 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	"use strict";angular.module("notifier",[]),__webpack_require__(35);
+	"use strict";angular.module("navbar").component("navbar",{controller:["$scope","$state","$rootScope","$log","CONFIG","User",function(t,n,a,e,l,i){var o=this;this.static={homeBtn:{link:"/",state:"home",title:l.appName},loginBtn:{link:"/login",state:"login",title:"Login"},adminBtn:{link:"/admin",state:"admin"},signupBtn:{link:"/signup",state:"signup",title:"Sign up"},logoutBtn:{link:"/logout",title:"Logout"}},this.$onInit=function(){o.logined=!1},a.$on("$stateChangeStart",function(t,n){o.currentState=n}),t.$watch(i.authorized,function(t){o.logined=t,o.user=i.get()}),this.logout=function(t){t.preventDefault(),i.serverRequest.logout(function(){e.debug("- logged out"),i.clear(),n.go("login")})},this.drawMode=!1,this.toggleDrawMode=function(t){t.preventDefault(),o.drawMode?(o.drawMode=!1,i.setMode(void 0)):(o.drawMode=!0,i.setMode("draw"))}}],template:'\n      <nav class="navbar navbar-fixed-top" role="navigation">\n        <div class="container">\n          <div class="navbar-header">\n            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">\n              <span class="sr-only">Toggle navigation</span>\n              <span class="icon-bar"></span>\n              <span class="icon-bar"></span>\n              <span class="icon-bar"></span>\n            </button>\n            <a class="navbar-brand navbar-brand-logo" ui-sref="{{$ctrl.static.homeBtn.state}}">\n              <img ng-src="/images/favicon.ico" alt="{{$ctrl.static.homeBtn.title}}">\n            </a>\n            <a class="navbar-brand" ui-sref="{{$ctrl.static.homeBtn.state}}">\n              {{$ctrl.static.homeBtn.title}}\n            </a>\n          </div>\n          <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">\n            <ul class="nav navbar-nav navbar-right">\n              <li ng-if="$ctrl.logined == true">  <a ui-sref="{{$ctrl.static.adminBtn.state}}">Hello, {{$ctrl.user.local.email}}</a></li>\n              <li ng-if="$ctrl.logined == true && $ctrl.currentState.name == \'floor\'">  <a href="#" ng-click="$ctrl.toggleDrawMode($event)" class="{{$ctrl.drawMode ? \'active\' : \'\'}}">{{$ctrl.drawMode ? \'Exit drawing\' : \'New seat\'}}</a></li>\n              <li ng-if="$ctrl.logined == true">  <a href="#" ng-click="$ctrl.logout($event)">{{$ctrl.static.logoutBtn.title}}</a></li>\n              <li ng-if="$ctrl.logined == false"> <a ui-sref="{{$ctrl.static.loginBtn.state}}">{{$ctrl.static.loginBtn.title}}</a></li>\n              <li ng-if="$ctrl.logined == false"> <a ui-sref="{{$ctrl.static.signupBtn.state}}">{{$ctrl.static.signupBtn.title}}</a></li>\n            </ul>\n          </div>\n        </div>\n      </nav>\n    '});
 
 /***/ },
 /* 35 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("notifier").component("notifier",{controller:["$scope","Notifications",function(i,n){var t=this;this.notifications=[],i.$watch(n.get,function(i){t.notifications=i}),this.removeNotification=function(i){n.remove(i)}}],template:'\n      <div class="notifier-container">\n        <div class="container">\n          <div class="notifier-centeredColumn">\n            <div ng-repeat="notification in $ctrl.notifications" class="notifier-alert-container">\n              <div class="alert alert-{{notification.type}} notifier-alert text-center" role="alert">\n                {{notification.msg}}\n                <span class="glyphicon glyphicon-remove" aria-hidden="true" ng-click="$ctrl.removeNotification(notification)"></span>\n              </div>\n            </div>\n          </div>\n        </div>\n      </div>\n    '});
+	"use strict";angular.module("notifier",[]),__webpack_require__(36);
 
 /***/ },
 /* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("entryForm",[]),__webpack_require__(37),__webpack_require__(38);
+	"use strict";var colors=__webpack_require__(37);angular.module("notifier").component("notifier",{controller:["$scope","Notifications",function(o,i){var t=this;this.notifications=[];var n=600,a={attached:"bottom",width:n,padding:0,zindex:1010,history:!1,closeOnEscape:!0,focusInput:!1,autoOpen:!0,navigateArrows:!1,navigateCaption:!1,overlay:!1,transitionIn:"fadeInUp",transitionOut:"fadeOutDown"};o.$watch(i.get,function(o){o.forEach(function(o){void 0==t.notifications.find(function(i){return i.timestamp==o.timestamp})&&t.showNotification(Object.assign({},o))}),[].concat(t.notifications).forEach(function(i){void 0==o.find(function(o){return o.timestamp==i.timestamp})&&t.hideNotification(Object.assign({},i))})},!0),this.showNotification=function(o){var n=window.jQuery('<div id="modal-alert"></div>');window.jQuery("body").append(n),n.css("bottom",60*t.notifications.length);var e=void 0;switch(o.type){case"success":e=colors.successColor;break;case"info":e=colors.infoColor;break;case"warning":e=colors.warningColor;break;case"danger":e=colors.dangerColor;break;default:e=colors.themeColor}var s=Object.assign(a,{title:o.msg||"Alert",headerColor:e,onOpening:function(){n.find(".iziModal-button-close").click(function(){i.remove(o)})},onClosed:function(){n.iziModal("destroy"),n.remove()}});n.iziModal(s),n.iziModal("open"),o.modalAlert=n,t.notifications.push(o)},this.hideNotification=function(o){o.modalAlert.iziModal("close");var i=t.notifications.indexOf(t.notifications.find(function(i){return i.timestamp==o.timestamp}));t.notifications.splice(i,1)}}]});
 
 /***/ },
 /* 37 */
 /***/ function(module, exports) {
 
-	"use strict";angular.module("entryForm").component("entryLogin",{controller:["$scope","$log","$state","User","Notifications",function(t,n,e,o,s){this.static={formHeader:"Login",btnText:"Login",signupLink:{text:"Don't have an account? Sign up",state:"signup"}},this.login=function(a){a.preventDefault(),o.serverRequest.login({email:t.email,password:t.password},function(t){void 0!=t.local&&(n.debug("- logged in as "+t.local.email),o.set(t),e.go("home"))},function(t){401==t.status&&s.add(s.codes.unauthorized)})}}],template:'\n    <div class="container">\n      <div class="row">\n        <div class="col-sm-4 col-sm-push-4 text-center">\n          <form action="/user/login" method="post" class="entry-form" autocomplete="on" ng-submit="$ctrl.login($event)">\n            <h2>{{$ctrl.static.formHeader}}</h2>\n            <div class="form-group">\n              <input name="email" ng-model="email" type="text" class="form-control" placeholder="Email" tabindex="1">\n              <input name="password" type="password" ng-model="password" class="form-control" placeholder="Password" tabindex="2">\n            </div>\n            <button type="submit" class="btn btn-default" tabindex="3">{{$ctrl.static.btnText}}</button>\n          </form>\n          <a ui-sref="{{$ctrl.static.signupLink.state}}" tabindex="4">{{$ctrl.static.signupLink.text}}</a>\n        </div>\n      </div>\n    </div>\n    '});
+	module.exports = {
+		"themeColor": "#fc8300",
+		"themeSubcolor": "#26728c",
+		"themeColor_dark": "#42344e",
+		"successColor": "#5cb85c",
+		"infoColor": "#46b8da",
+		"warningColor": "#eea236",
+		"primaryColor": "#337ab7",
+		"dangerColor": "#d43f3a"
+	};
 
 /***/ },
 /* 38 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("entryForm").component("entryRegister",{controller:["$log","$scope","$state","User","Notifications",function(t,n,e,s,o){this.static={formHeader:"Sign up",btnText:"Sign up",loginLink:{text:"Already have an account? Login",state:"login"}},this.signup=function(a){a.preventDefault(),s.serverRequest.signup({email:n.email,password:n.password},function(n){void 0!=n.local&&(t.debug("- signed up & logged in as "+n.local.email),s.set(n),e.go("home"))},function(t){401==t.status&&o.add(o.codes.unauthorized)})}}],template:'\n    <div class="container">\n      <div class="row">\n        <div class="col-sm-4 col-sm-push-4 text-center">\n          <form action="/user/signup" method="post" class="entry-form" ng-submit="$ctrl.signup($event)">\n            <h2>{{$ctrl.static.formHeader}}</h2>\n            <div class="form-group">\n              <input name="email" ng-model="email" type="email" class="form-control" placeholder="Email" tabindex="1">\n              <input name="password" type="password" ng-model="password" class="form-control" placeholder="Password" tabindex="2">\n            </div>\n            <button type="submit" class="btn btn-default" tabindex="3">{{$ctrl.static.btnText}}</button>\n          </form>\n          <a href="{{$ctrl.static.loginLink.state}}" tabindex="4">{{$ctrl.static.loginLink.text}}</a>\n        </div>\n      </div>\n    </div>\n    '});
+	"use strict";angular.module("entryForm",[]),__webpack_require__(39),__webpack_require__(40);
 
 /***/ },
 /* 39 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	"use strict";angular.module("homepage",[]),__webpack_require__(40);
+	"use strict";angular.module("entryForm").component("entryLogin",{controller:["$scope","$log","$state","User","Notifications",function(t,n,e,o,s){this.static={formHeader:"Login",btnText:"Login",signupLink:{text:"Don't have an account? Sign up",state:"signup"}},this.login=function(a){a.preventDefault(),o.serverRequest.login({email:t.email,password:t.password},function(t){void 0!=t.local&&(n.debug("- logged in as "+t.local.email),o.set(t),e.go("home"))},function(t){401==t.status&&s.add(s.codes.unauthorized)})}}],template:'\n    <div class="container">\n      <div class="row">\n        <div class="col-sm-4 col-sm-push-4 text-center">\n          <form action="/user/login" method="post" class="entry-form" autocomplete="on" ng-submit="$ctrl.login($event)">\n            <h2>{{$ctrl.static.formHeader}}</h2>\n            <div class="form-group">\n              <input name="email" ng-model="email" type="text" class="form-control" placeholder="Email" tabindex="1">\n              <input name="password" type="password" ng-model="password" class="form-control" placeholder="Password" tabindex="2">\n            </div>\n            <button type="submit" class="btn btn-default" tabindex="3">{{$ctrl.static.btnText}}</button>\n          </form>\n          <a ui-sref="{{$ctrl.static.signupLink.state}}" tabindex="4">{{$ctrl.static.signupLink.text}}</a>\n        </div>\n      </div>\n    </div>\n    '});
 
 /***/ },
 /* 40 */
 /***/ function(module, exports) {
 
-	"use strict";angular.module("homepage").component("homepage",{controller:[function(){this.floors=[{title:"Floor #19",id:"floor19"}],this.$onInit=function(){}}],template:'\n      <div class="container homepage">\n        <div class="row">\n          <div class="col-sm-3 col-sm-push-9">\n            <div class="list-group">\n              <a ng-repeat="floor in $ctrl.floors" ui-sref="floor({floorID: floor.id})" class="list-group-item">{{floor.title}}</a>\n            </div>\n          </div>\n\n          <div class="col-sm-9 col-sm-pull-3">\n            <div class="jumbotron">\n              <h1 class="text-left">Welcome to<br>Ciklum OfficeSpace</h1>\n              <p>Now you can find your Ciklum friend much faster</p>\n            </div>\n          </div>\n        </div>\n      </div>\n    '});
+	"use strict";angular.module("entryForm").component("entryRegister",{controller:["$log","$scope","$state","User","Notifications",function(t,n,e,s,o){this.static={formHeader:"Sign up",btnText:"Sign up",loginLink:{text:"Already have an account? Login",state:"login"}},this.signup=function(a){a.preventDefault(),s.serverRequest.signup({email:n.email,password:n.password},function(n){void 0!=n.local&&(t.debug("- signed up & logged in as "+n.local.email),s.set(n),e.go("home"))},function(t){401==t.status&&o.add(o.codes.unauthorized)})}}],template:'\n    <div class="container">\n      <div class="row">\n        <div class="col-sm-4 col-sm-push-4 text-center">\n          <form action="/user/signup" method="post" class="entry-form" ng-submit="$ctrl.signup($event)">\n            <h2>{{$ctrl.static.formHeader}}</h2>\n            <div class="form-group">\n              <input name="email" ng-model="email" type="email" class="form-control" placeholder="Email" tabindex="1">\n              <input name="password" type="password" ng-model="password" class="form-control" placeholder="Password" tabindex="2">\n            </div>\n            <button type="submit" class="btn btn-default" tabindex="3">{{$ctrl.static.btnText}}</button>\n          </form>\n          <a href="{{$ctrl.static.loginLink.state}}" tabindex="4">{{$ctrl.static.loginLink.text}}</a>\n        </div>\n      </div>\n    </div>\n    '});
 
 /***/ },
 /* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";__webpack_require__(42),__webpack_require__(44),__webpack_require__(56),angular.module("floor",["search","mapcanvas","modal"]),__webpack_require__(49);
+	"use strict";angular.module("homepage",[]),__webpack_require__(42);
 
 /***/ },
 /* 42 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	"use strict";angular.module("search",[]),__webpack_require__(43);
+	"use strict";angular.module("homepage").component("homepage",{controller:["Floor",function(l){this.floors=l().getAllConfigs().map(function(l){return l.title=l.title||l.id,l}).sort(function(l,o){return l.title<o.title?-1:l.title>o.title?1:0})}],template:'\n      <div class="container homepage">\n        <div class="row">\n          <div class="col-sm-3 col-sm-push-9">\n            <div ng-if="!$ctrl.floors.length">\n              <a ui-sref="admin" class="btn btn-default" style="width:100%">Create floors</a>\n            </div>\n            <div class="list-group">\n              <a ng-repeat="floor in $ctrl.floors" ui-sref="floor({floorID: floor.id})" class="list-group-item">{{floor.title}}</a>\n            </div>\n\n          </div>\n\n          <div class="col-sm-9 col-sm-pull-3">\n            <div class="jumbotron">\n              <h1 class="text-left">Welcome to<br>Ciklum OfficeSpace</h1>\n              <p>Now you can find your Ciklum friend much faster</p>\n            </div>\n          </div>\n        </div>\n      </div>\n    '});
 
 /***/ },
 /* 43 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("search").component("search",{controller:["$scope","Employees",function(e,t){var r=this;this.searchQuery="",this.employees=[],e.$watch(t.get,function(e){r.employees=e}),this.onSearchSubmit=function(e){e.preventDefault()},this.onEmployeeSelect=function(e){console.log(e.firstName+" "+e.lastName)},this.nameSearch=function(e){var t=e.firstName.toLowerCase()+" "+e.lastName.toLowerCase();return e.firstName.toLowerCase().indexOf(r.searchQuery.toLowerCase())!=-1||e.lastName.toLowerCase().indexOf(r.searchQuery.toLowerCase())!=-1||t.indexOf(r.searchQuery.toLowerCase())!=-1}}],template:'\n      <div class="search-container">\n        <form action="#" class="search-form" ng-submit="$ctrl.onSearchSubmit($event)">\n          <input ng-model="$ctrl.searchQuery" class="search-input" placeholder="Search">\n        </form>\n        <ul class="search-result-list" ng-show="$ctrl.searchQuery.length > 0">\n          <li ng-repeat="employee in $ctrl.employees | filter: $ctrl.nameSearch" class="search-result-item" ng-click="$ctrl.onEmployeeSelect(employee)">{{employee.firstName}} {{employee.lastName}}</li>\n          <li ng-show="($ctrl.employees | filter: $ctrl.nameSearch).length == 0" class="search-result-item search-result-item-disabled">No results</li>\n        </ul>\n      </div>\n    '});
+	"use strict";__webpack_require__(44),__webpack_require__(46),__webpack_require__(50),angular.module("floor",["search","mapcanvas","modal"]),__webpack_require__(53);
 
 /***/ },
 /* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";angular.module("mapcanvas",[]),__webpack_require__(45);
+	"use strict";angular.module("search",[]),__webpack_require__(45);
 
 /***/ },
 /* 45 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	"use strict";var Mapcanvas=__webpack_require__(46);angular.module("mapcanvas").component("mapcanvas",{controller:["$scope","$log","$stateParams","$timeout","Notifications","User","Floor",function(a,n,s,c,o,t,i){var e=this,v=s.floorID;this.mapcanvas=new Mapcanvas(a,n,v,{Notifications:o,User:t,Floor:i}),this.$onInit=function(){if(!SVG.supported)return o.add(o.codes.svgNotSupported),void n.error("SVG not supported");var a=document.getElementById("mapcanvas-map");a.addEventListener("load",function(){e.mapcanvas.drawMapCanvas("mapcanvas",a.width,a.height),e.mapcanvas.setSeats(i(v).getSeats())})}}],bindings:{mapcanvas:"<"},template:'\n      <div class="container">\n        <div class="row">\n          <div class="col-lg-10 col-lg-push-1">\n            <div class="mapcanvas-container" id="mapcanvas-container">\n              <img ng-src="images/floor19.png" class="mapcanvas-map" id="mapcanvas-map">\n              <div class="mapcanvas" id="mapcanvas"></div>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <modal mapcanvas="$ctrl.mapcanvas"></modal>\n    '});
+	"use strict";angular.module("search").component("search",{controller:["$scope","Employees",function(e,t){var r=this;this.searchQuery="",this.employees=[],e.$watch(t.get,function(e){r.employees=e}),this.onSearchSubmit=function(e){e.preventDefault()},this.onEmployeeSelect=function(e){console.log(e.firstName+" "+e.lastName)},this.nameSearch=function(e){var t=e.firstName.toLowerCase()+" "+e.lastName.toLowerCase();return e.firstName.toLowerCase().indexOf(r.searchQuery.toLowerCase())!=-1||e.lastName.toLowerCase().indexOf(r.searchQuery.toLowerCase())!=-1||t.indexOf(r.searchQuery.toLowerCase())!=-1}}],template:'\n      <div class="search-container">\n        <form action="#" class="search-form" ng-submit="$ctrl.onSearchSubmit($event)">\n          <input ng-model="$ctrl.searchQuery" class="search-input" placeholder="Search">\n        </form>\n        <ul class="search-result-list" ng-show="$ctrl.searchQuery.length > 0">\n          <li ng-repeat="employee in $ctrl.employees | filter: $ctrl.nameSearch" class="search-result-item" ng-click="$ctrl.onEmployeeSelect(employee)">{{employee.firstName}} {{employee.lastName}}</li>\n          <li ng-show="($ctrl.employees | filter: $ctrl.nameSearch).length == 0" class="search-result-item search-result-item-disabled">No results</li>\n        </ul>\n      </div>\n    '});
 
 /***/ },
 /* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";function _classCallCheck(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}var _createClass=function(){function e(e,t){for(var a=0;a<t.length;a++){var i=t[a];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,a,i){return a&&e(t.prototype,a),i&&e(t,i),t}}(),Seat=__webpack_require__(47),Mapcanvas=function(){function e(t,a,i,s){var o=this;_classCallCheck(this,e),this.$scope=t,this.$log=a,this.Notifications=s.Notifications,this.User=s.User,this.Floor=s.Floor,this.floorID=i,this.seats=[],this.config={blockAreaRadius:25},this.$scope.$watch(function(){return o.$scope.activeSeatID},function(e){o.Floor(o.floorID).setActiveSeatID(e),o.seats.forEach(function(t){t.id!=e&&t.deactivate()})}),this.$scope.$watch(this.User.getMode,function(e){switch(o.userMode=e,e){case"draw":o.draw&&o.draw.addClass("mapcanvas-draw-mode");break;default:o.draw&&o.draw.removeClass("mapcanvas-draw-mode")}})}return _createClass(e,[{key:"drawMapCanvas",value:function(e,t,a){var i=this;this.draw=SVG(e).size(t,a).addClass("mapcanvas-canvas"),this.group=this.draw.group(),this.draw.click(function(e){e.preventDefault();var t=e.target.id==i.draw.node.id;t&&i.User.authorized()&&"draw"==i.userMode&&i.addSeat({x:e.offsetX,y:e.offsetY})})}},{key:"addSeat",value:function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{x:0,y:0},t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:(new Date).toISOString(),a=this,i=arguments[2],s=arguments[3],o=void 0!=this.seats.find(function(t){return Math.abs(t.x-e.x)<a.config.blockAreaRadius&&Math.abs(t.y-e.y)<a.config.blockAreaRadius});if(o)return void this.$scope.$apply(function(){a.Notifications.add(a.Notifications.codes.tooCloseSeat)});var n=new Seat(this.draw,this.$scope,e,t,i,s);return this.seats.push(n),this.group.add(n.svg),this.Floor(this.floorID).addSeat({x:n.x,y:n.y,id:n.id,employeeID:n.employeeID,floorID:this.floorID}),n}},{key:"updateSeat",value:function(e,t){var a=this.seats.find(function(t){return t.id==e});a&&(a.title=t.title,a.id=t.id,a.employeeID=t.employeeID)}},{key:"removeSeat",value:function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{id:void 0};this.seats.find(function(t){return t.id==e.id}).remove(),this.seats=this.seats.filter(function(t){return t.id!=e.id})}},{key:"setSeats",value:function(){var e=this,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:[];t.forEach(function(t){e.seats.push(new Seat(e.draw,e.$scope,{x:t.x,y:t.y},t.id,t.title,t.employeeID))})}},{key:"deactivateAllSeats",value:function(){var e=this;this.seats.forEach(function(e){return e.deactivate()}),this.$scope.$apply(function(){e.$scope.activeSeatID=void 0})}}]),e}();module.exports=Mapcanvas;
+	"use strict";angular.module("mapcanvas",[]),__webpack_require__(47);
 
 /***/ },
 /* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";function _classCallCheck(t,i){if(!(t instanceof i))throw new TypeError("Cannot call a class as a function")}var _createClass=function(){function t(t,i){for(var e=0;e<i.length;e++){var o=i[e];o.enumerable=o.enumerable||!1,o.configurable=!0,"value"in o&&(o.writable=!0),Object.defineProperty(t,o.key,o)}}return function(i,e,o){return e&&t(i.prototype,e),o&&t(i,o),i}}(),colors=__webpack_require__(48),Seat=function(){function t(i,e){var o=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{x:0,y:0},s=arguments.length>3&&void 0!==arguments[3]?arguments[3]:(new Date).toISOString(),a=this,n=arguments[4],r=arguments[5];_classCallCheck(this,t),this.config={radius:8,strokeWidth:8,transitionDuration:200},this.$scope=e,this.x=o.x,this.y=o.y,this.id=s,this.title=n,this.active=!1,this.employeeID=r,this.svg=i.circle(2*this.config.radius).fill(colors.themeSubcolor).stroke({color:colors.themeColor,opacity:.6,width:this.config.strokeWidth}).center(this.x,this.y).addClass("seat"),this.svg.click(function(t){t.preventDefault(),a.onSelect()})}return _createClass(t,[{key:"onSelect",value:function(){this.active?this.deactivate():this.activate()}},{key:"activate",value:function(){var t=this;this.active=!0,this.$scope.$apply(function(){t.$scope.activeSeatID=t.id}),this.svg.addClass("seat--active").animate(this.config.transitionDuration).fill(colors.themeColor_dark)}},{key:"deactivate",value:function(){this.active=!1,this.svg.removeClass("seat--active").animate(this.config.transitionDuration).fill(colors.themeSubcolor)}},{key:"remove",value:function(){var t=this;this.svg.removeClass("seat--active").animate(this.config.transitionDuration).fill(colors.themeColor).radius(0).stroke({width:0}),setTimeout(function(){t.svg.remove()},this.config.transitionDuration)}}]),t}();module.exports=Seat;
+	"use strict";var Mapcanvas=__webpack_require__(48);angular.module("mapcanvas").component("mapcanvas",{controller:["$scope","$log","$stateParams","$timeout","Notifications","User","Floor",function(a,n,s,t,c,i,o){var p=this,r=s.floorID,e=o(r).getConfig();this.mapSrc=e.mapSrc,this.mapWidth=e.width,this.mapcanvas=new Mapcanvas(a,n,r,{Notifications:c,User:i,Floor:o}),this.$onInit=function(){if(!SVG.supported)return c.add(c.codes.svgNotSupported),void n.error("SVG not supported");var a=document.getElementById("mapcanvas-map");a.addEventListener("load",function(){p.mapcanvas.drawMapCanvas("mapcanvas",a.width,a.height),p.mapcanvas.setSeats(o(r).getSeats())})}}],bindings:{mapcanvas:"<"},template:'\n      <div class="container">\n        <div class="row">\n          <div class="col-lg-10 col-lg-push-1">\n            <div class="mapcanvas-container" id="mapcanvas-container" style="width: {{$ctrl.mapWidth ? $ctrl.mapWidth + \'px\' : \'100%\'}}">\n              <img ng-src="{{$ctrl.mapSrc}}" class="mapcanvas-map" id="mapcanvas-map" alt="Loading of {{$ctrl.mapSrc}} failed">\n              <div class="mapcanvas" id="mapcanvas"></div>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <modal mapcanvas="$ctrl.mapcanvas"></modal>\n    '});
 
 /***/ },
 /* 48 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	module.exports = {
-		"themeColor": "#fc8300",
-		"themeSubcolor": "#26728c",
-		"themeColor_dark": "#42344e"
-	};
+	"use strict";function _classCallCheck(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}var _createClass=function(){function e(e,t){for(var i=0;i<t.length;i++){var a=t[i];a.enumerable=a.enumerable||!1,a.configurable=!0,"value"in a&&(a.writable=!0),Object.defineProperty(e,a.key,a)}}return function(t,i,a){return i&&e(t.prototype,i),a&&e(t,a),t}}(),Seat=__webpack_require__(49),Mapcanvas=function(){function e(t,i,a,o){var s=this;_classCallCheck(this,e),this.$scope=t,this.$log=i,this.Notifications=o.Notifications,this.User=o.User,this.Floor=o.Floor,this.floorID=a,this.seats=[],this.config={blockAreaRadius:25},this.$scope.$watch("activeSeat",function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{id:void 0};s.seats.forEach(function(t){if(t.id==e.id){t.x=e.x,t.y=e.y;var i={id:t.id,x:t.x,y:t.y,title:t.title,employeeID:t.employeeID,floorID:s.floorID};s.Floor(s.floorID).updateSeat(t.id,i),s.Floor(s.floorID).setActiveSeat(i)}else t.deactivate()})}),this.$scope.$watch(this.User.getMode,function(e){switch(s.userMode=e,e){case"draw":s.draw&&s.draw.addClass("mapcanvas-draw-mode");break;default:s.draw&&s.draw.removeClass("mapcanvas-draw-mode")}})}return _createClass(e,[{key:"isPlaceFree",value:function(){var e=this,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{x:0,y:0};return void 0==this.seats.find(function(i){return Math.abs(i.x-t.x)<e.config.blockAreaRadius&&Math.abs(i.y-t.y)<e.config.blockAreaRadius})}},{key:"drawMapCanvas",value:function(e,t,i){var a=this;this.draw=SVG(e).size(t,i).addClass("mapcanvas-canvas"),this.group=this.draw.group(),this.config.width=t,this.config.height=i,this.draw.click(function(e){e.preventDefault();var t=e.target.id==a.draw.node.id;t&&a.User.authorized()&&"draw"==a.userMode&&a.addSeat({x:e.offsetX,y:e.offsetY})})}},{key:"addSeat",value:function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{x:0,y:0},t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:(new Date).toISOString(),i=this,a=arguments[2],o=arguments[3];if(!this.isPlaceFree(e))return void this.$scope.$apply(function(){i.Notifications.add(i.Notifications.codes.tooCloseSeat)});var s=new Seat({draw:this.draw,$scope:this.$scope,width:this.config.width,height:this.config.height},e,t,a,o);return this.seats.push(s),this.group.add(s.svg),this.Floor(this.floorID).addSeat({id:s.id,x:s.x,y:s.y,employeeID:s.employeeID,title:s.title,floorID:this.floorID}),s}},{key:"updateSeat",value:function(e,t){var i=this.seats.find(function(t){return t.id==e});i&&(i.title=t.title,i.id=t.id,i.employeeID=t.employeeID)}},{key:"removeSeat",value:function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{id:void 0};this.seats.find(function(t){return t.id==e.id}).remove(),this.seats=this.seats.filter(function(t){return t.id!=e.id})}},{key:"setSeats",value:function(){var e=this,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:[];t.forEach(function(t){e.seats.push(new Seat({draw:e.draw,$scope:e.$scope,width:e.config.width,height:e.config.height},{x:t.x,y:t.y},t.id,t.title,t.employeeID))})}},{key:"deactivateAllSeats",value:function(){var e=this;this.seats.forEach(function(e){return e.deactivate()}),this.$scope.$apply(function(){e.$scope.activeSeat=void 0})}}]),e}();module.exports=Mapcanvas;
 
 /***/ },
 /* 49 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";function _classCallCheck(t,i){if(!(t instanceof i))throw new TypeError("Cannot call a class as a function")}var _createClass=function(){function t(t,i){for(var e=0;e<i.length;e++){var a=i[e];a.enumerable=a.enumerable||!1,a.configurable=!0,"value"in a&&(a.writable=!0),Object.defineProperty(t,a.key,a)}}return function(i,e,a){return e&&t(i.prototype,e),a&&t(i,a),i}}(),colors=__webpack_require__(37),Seat=function(){function t(i){var e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{x:0,y:0},a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:(new Date).toISOString(),s=this,o=arguments[3],n=arguments[4];_classCallCheck(this,t),this.config={radius:8,strokeWidth:8,transitionDuration:200},this.mapcanvas=i,this.x=e.x,this.y=e.y,this.id=a,this.title=o,this.active=!1,this.employeeID=n,this.svg=i.draw.circle(2*this.config.radius).fill(colors.themeSubcolor).stroke({color:colors.themeColor,opacity:.6,width:this.config.strokeWidth}).center(this.x,this.y).addClass("seat"),this.svg.draggable({minX:0,minY:0,maxX:this.mapcanvas.width,maxY:this.mapcanvas.height}),this.svg.click(function(t){t.preventDefault(),s.onSelect()}),this.svg.on("dragstart.seat",function(t){s.oldX=t.detail.p.x,s.oldY=t.detail.p.y}),this.svg.on("dragend.seat",function(t){var i=t.detail.p.x,e=t.detail.p.y;s.x=s.x+i-s.oldX,s.y=s.y+e-s.oldY,s.mapcanvas.$scope.$apply(function(){s.mapcanvas.$scope.activeSeat={id:s.id,x:s.x,y:s.y}})})}return _createClass(t,[{key:"onSelect",value:function(){this.active?this.deactivate():this.activate()}},{key:"activate",value:function(){this.active=!0,this.svg.addClass("seat--active").animate(this.config.transitionDuration).fill(colors.themeColor_dark)}},{key:"deactivate",value:function(){this.active=!1,this.svg.removeClass("seat--active").animate(this.config.transitionDuration).fill(colors.themeSubcolor)}},{key:"remove",value:function(){var t=this;this.svg.removeClass("seat--active").animate(this.config.transitionDuration).fill(colors.themeColor).radius(0).stroke({width:0}),setTimeout(function(){t.svg.remove()},this.config.transitionDuration)}}]),t}();module.exports=Seat;
+
+/***/ },
+/* 50 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";angular.module("modal",[]),__webpack_require__(51);
+
+/***/ },
+/* 51 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";var colors=__webpack_require__(37),confirm=__webpack_require__(52);angular.module("modal").component("modal",{controller:["$scope","$rootScope","$stateParams","$timeout","$log","Floor","Employees","User",function(t,e,a,n,o,i,l,s){var d=this,c=a.floorID,m=300,r=300,u=40,f={requiredField:1,uniqueField:2},p='<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>',v={headerColor:colors.themeColor,attached:"top",width:m,padding:15,zindex:1010,history:!1,closeOnEscape:!1,focusInput:!1,autoOpen:!0,navigateArrows:!1,navigateCaption:!1,onClosing:function(){t.$apply(function(){i(c).setActiveSeat(void 0)}),d.mapcanvas.deactivateAllSeats()},onClosed:function(){d.modal.iziModal("destroy"),d.modal.empty()}};this.config={attached:"RIGHT"},this.$onInit=function(){d.modal=window.jQuery("#modal")},t.$watch(s.authorized,function(t){d.authorized=t}),t.$watch(i(c).getActiveSeat,function(t){d.seat=t}),t.$watch(l.get,function(t){d.employees=t}),t.$watch(function(){return void 0!=d.authorized&&void 0!=d.seat&&void 0!=d.employees},function(t){t&&d.initSeatModal()}),e.$on("$stateChangeStart",function(t,e,a,n){e.name!=n.name&&d.modal&&(d.modal.iziModal("destroy"),d.modal.empty())}),this.initSeatModal=function(){d.authorized?d.initSeatEditModal():d.initSeatDetailsModal()},this.initSeatDetailsModal=function(){d.modal.html(d.getDetailsTemplate());var t=function(){switch(d.config.attached){case"LEFT":d.attachToLeft();break;case"RIGHT":d.attachToRight()}},e=Object.assign(v,{title:"Seat details",subtitle:"Only admin can change data here",onOpening:t});n(function(){d.modal.iziModal(e)},0)},this.initSeatEditModal=function(){d.modal.html(d.getEditTemplate());var t=function(){var t=d,e=d.modal.find(".modal-form"),a=d.modal.find("#modal-delete-btn"),n=e.find('input[name="userName"]'),o=e.find('input[name="employeeID"]'),i=e.find(".modal-form-control-container--employee"),l=e.find(".glyphicon-remove--employee"),s=e.find(".modal-employee-list");switch(d.config.attached){case"LEFT":d.attachToLeft();break;case"RIGHT":d.attachToRight()}l.click(function(t){t.preventDefault(),l.blur(),d.unsetEmployee()}),n.keyup(function(){var t=n.val().toLowerCase(),a=d.employees.slice(0).filter(function(e){return e.firstName.toLowerCase().indexOf(t)!=-1||e.lastName.toLowerCase().indexOf(t)!=-1||(e.firstName.toLowerCase()+" "+e.lastName.toLowerCase()).indexOf(t)!=-1}).map(function(t){return'<li data-id="'+t.id+'">'+t.firstName+" "+t.lastName+"</li>"}).sort();e.find(".glyphicon-remove--employee").remove(),s.html(a.length!=d.employees.length?a.join(""):"")}),s.click(function(t){var a=d.getEmployee(t.target.dataset.id);n.val(a.firstName+" "+a.lastName),o.val(a.id),s.html("");var l=e.find(".glyphicon-remove--employee");l.length||!function(){var t=window.jQuery(p);t.click(function(e){e.preventDefault(),t.blur(),d.unsetEmployee()}),i.append(t)}()}),d.modal.find("input[required]").keyup(function(){this.value.length&&t.removeNotification({code:f.requiredField})}),d.modal.find(".modal-notification-msg").click(function(){t.removeNotification({code:this.dataset.code})}),e.submit(function(t){t.preventDefault(),d.emptyIDValidation()&&d.uniqueIDValidation()&&d.updateSeat()}),a.click(function(t){t.preventDefault(),a.blur(),d.removeSeat()})},e=Object.assign(v,{title:"Update seat",subtitle:"Fields with *asterisk must be unique",onOpening:t});n(function(){d.modal.iziModal(e)},0)},this.updateSeat=function(){var e=d.modal.find('input[name="employeeID"]'),a=Object.assign({},d.seat);a.title=d.modal.find('input[name="title"]').val(),a.id=d.modal.find('input[name="seatID"]').val(),a.employeeID=e.val().length?e.val():void 0,t.$apply(function(){i(c).updateSeat(d.seat.id,a)}),d.mapcanvas.updateSeat(d.seat.id,a),d.seat=void 0,d.modal.iziModal("close")},this.removeSeat=function(){var e="Are you sure you want to remove this seat?",a=d.getEmployee(d.modal.find('input[name="employeeID"]').val());a&&(e+=" "+a.firstName+" "+a.lastName+" will lose the seat."),confirm({msg:e}).then(function(){d.mapcanvas.removeSeat(d.seat),t.$apply(function(){i(c).removeSeat(d.seat)}),d.seat=void 0,d.modal.iziModal("close")},function(){}).catch(function(t){return o.error(t)})},this.unsetEmployee=function(){var t=d.getEmployee(d.modal.find('input[name="employeeID"]').val()),e="Are you sure you want to remove "+t.firstName+" "+t.lastName+" from this seat?";confirm({msg:e}).then(function(){d.clearEmployeeList()},function(){}).catch(function(t){return o.error(t)})},this.emptyIDValidation=function(){var t=!0;return d.modal.find("input[required]").each(function(){this.value.length||(t=!1)}),t||d.addNotification({status:"ERROR",msg:"Fill all required fields",code:f.requiredField}),t},this.uniqueIDValidation=function(){var t=!0,e=d.modal.find('input[name="seatID"]').val();return e==d.seat.id?t:(t=void 0==i(c).getSeats().find(function(t){return t.id==e}),t||d.addNotification({status:"ERROR",msg:"Enter unique seat ID",code:f.uniqueField}),t)},this.clearEmployeeList=function(){d.modal.find('input[name="userName"]').val(""),d.modal.find('input[name="employeeID"]').val(""),d.modal.find(".modal-employee-list").html(""),d.modal.find(".glyphicon-remove--employee").remove()},this.getEmployee=function(t){return d.employees.find(function(e){return e.id==t})},this.setStatus=function(t){switch(t){case"ERROR":d.modal.addClass("modal-status--error");break;case"NONE":d.modal.removeClass("modal-status--error")}},this.addNotification=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};if(t.code){var e=d.modal.find(".modal-notification-msg");d.setStatus(t.status),e.attr("data-code",t.code),e.html(t.msg),n(function(){e.addClass("modal-notification-msg--active")},r)}},this.removeNotification=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};if(t.code){var e=d.modal.find('.modal-notification-msg[data-code="'+t.code+'"]');e.length&&(e.removeClass("modal-notification-msg--active"),n(function(){d.setStatus("NONE"),e.html("")},r))}},this.attachToLeft=function(){d.modal.css({left:m/2+u,right:"auto","margin-left":"0 !important"}),d.modal.find(".modal-navigation-left").css("display","none").off("click"),d.modal.find(".modal-navigation-right").css("display","block").click(function(t){t.preventDefault(),d.attachToRight()}),d.config.attached="LEFT"},this.attachToRight=function(){d.modal.css({left:"auto",right:m/2+u,"margin-right":"0 !important"}),d.modal.find(".modal-navigation-left").css("display","block").click(function(t){t.preventDefault(),d.attachToLeft()}),d.modal.find(".modal-navigation-right").css("display","none").off("click"),d.config.attached="RIGHT"},this.getDetailsTemplate=function(){var t=void 0!=d.seat.employeeID,e=d.getEmployee(d.seat.employeeID);return'\n            <form class="modal-form form-horizontal" autocomplete="off" novalidate>\n              <div class="form-group">\n                <label class="col-xs-4 control-label col-thinpad-right">Seat title</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <p class="modal-input-value">'+(d.seat.title?d.seat.title:"<i>untitled</i>")+'</p>\n                </div>\n              </div>\n              <div class="form-group">\n                <label class="col-xs-4 control-label col-thinpad-right">Seat ID</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <p class="modal-input-value">'+d.seat.id+'</p>\n                </div>\n              </div>\n              <div class="form-group">\n                <label class="col-xs-4 control-label col-thinpad-right">Occupant</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <p class="modal-input-value">'+(t&&e?e.firstName+" "+e.lastName:"<i>free</i>")+'</p>\n                </div>\n              </div>\n            </form>\n            <div class="modal-notification-container">\n              <span class="modal-notification-msg"></span>\n            </div>\n            <span class="modal-navigation modal-navigation-left"></span>\n            <span class="modal-navigation modal-navigation-right"></span>\n          '},this.getEditTemplate=function(){var t=void 0!=d.seat.employeeID,e=d.getEmployee(d.seat.employeeID);return'\n            <form class="modal-form form-horizontal" autocomplete="off" novalidate>\n              <div class="form-group">\n                <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <input\n                    type="text"\n                    name="title"\n                    class="form-control modal-form-control"\n                    value="'+(d.seat.title?d.seat.title:"")+'"\n                    placeholder="untitled"\n                    tabindex="21"\n                    id="inputSeat1">\n                </div>\n              </div>\n              <div class="form-group">\n                <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">*Seat ID</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <input\n                    type="text"\n                    name="seatID"\n                    class="form-control modal-form-control"\n                    value="'+d.seat.id+'"\n                    placeholder="Unique seat ID"\n                    tabindex="22"\n                    required\n                    id="inputSeat2">\n                </div>\n              </div>\n              <div class="form-group">\n                <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <div class="modal-form-control-container modal-form-control-container--employee">\n                    <input\n                      type="text"\n                      name="userName"\n                      class="form-control modal-form-control modal-form-control--employee"\n                      value="'+(t&&e?e.firstName+" "+e.lastName:"")+'"\n                      placeholder="free"\n                      tabindex="23"\n                      id="inputSeat3">\n                    '+(t&&e?p:"")+'\n                  </div>\n\n                  <input\n                    type="hidden"\n                    name="employeeID"\n                    value="'+(t?d.seat.employeeID:"")+'"\n                    class="hidden">\n                  <div class="modal-employee-list-container">\n                    <ul class="modal-employee-list"></ul>\n                  </div>\n                </div>\n              </div>\n              <div class="form-group modal-form-group--last">\n                <div class="col-xs-6 col-thinpad-right">\n                  <button type="button" id="modal-delete-btn" class="btn btn-danger modal-btn-control" tabindex="25">Delete</button>\n                </div>\n                <div class="col-xs-6 col-thinpad-left">\n                  <button type="submit" class="btn btn-default modal-btn-control" tabindex="24">Save</button>\n                </div>\n              </div>\n            </form>\n            <div class="modal-notification-container">\n              <span class="modal-notification-msg"></span>\n            </div>\n            <span class="modal-navigation modal-navigation-left"></span>\n            <span class="modal-navigation modal-navigation-right"></span>\n          '}}],bindings:{mapcanvas:"<"},template:'\n      <div class="modal-container">\n        <div id="modal"></div>\n      </div>\n    '});
+
+/***/ },
+/* 52 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";var colors=__webpack_require__(37),confirmModalFrame={headerColor:colors.themeColor,width:300,padding:15,zindex:1040,closeOnEscape:!1,history:!1,icon:!1,focusInput:!0,overlayClose:!1,autoOpen:!0},getTemplate=function(){var n=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},o=n.msg||"Are you sure?",t=n.successBtnText||"Continue",e=n.cancelBtnText||"Cancel";return'\n    <div class="confirm">\n      <form action="#" class="confirm-form" autocomplete="off" novalidate>\n        <p class="confirm-text">'+o+'</p>\n        <div class="row">\n          <div class="col-xs-6 col-thinpad-right">\n            <button type="button" class="btn btn-danger confirm-btn confirm-btn--cancel">'+e+'</button>\n          </div>\n          <div class="col-xs-6 col-thinpad-left">\n            <button type="submit" class="btn btn-default confirm-btn">'+t+'</button>\n          </div>\n        </div>\n        <input type="hidden" class="hidden">\n      </form>\n    </div>\n  '},confirm=function(n){var o=arguments.length>1&&void 0!==arguments[1]?arguments[1]:window.jQuery("body"),t=window.jQuery(getTemplate(n));return o.append(t),new Promise(function(o,e){var i=function(){t.find(".confirm-form").submit(function(n){n.preventDefault(),t.iziModal("close"),o(!0)}),t.find(".confirm-btn--cancel").click(function(n){n.preventDefault(),t.iziModal("close"),e(!1)}),t.find(".iziModal-button-close").click(function(n){n.preventDefault(),t.iziModal("close"),e(!1)})},c=Object.assign(confirmModalFrame,{title:n.title||"Confirm your action",subtitle:n.subtitle,onOpening:i,onClosed:function(){t.iziModal("destroy"),t.remove()}});t.iziModal(c)})};module.exports=confirm;
+
+/***/ },
+/* 53 */
 /***/ function(module, exports) {
 
 	"use strict";angular.module("floor").component("floor",{controller:[function(){this.$onInit=function(){}}],template:"\n      <search></search>\n      <mapcanvas></mapcanvas>\n    "});
 
 /***/ },
-/* 50 */
+/* 54 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";angular.module("admin",[]),__webpack_require__(55);
+
+/***/ },
+/* 55 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";var confirm=__webpack_require__(52);angular.module("admin").component("admin",{controller:["$scope","Floor",function(n,t){var o=this;this.$onInit=function(){o.getFloors()},this.getFloors=function(){o.floors=t().getAllConfigs().map(function(n){return n.oldID=n.id,n})},this.onFloorSaveClick=function(l,e){l.preventDefault(),confirm({msg:"Are you sure to update "+e.oldID+" floor config?"}).then(function(){t(e.oldID).setConfig(e),n.$apply(function(){o.getFloors()})},function(){})},this.onFloorCreateClick=function(n){n.preventDefault();var t=(new Date).toISOString();o.floors.push({id:t,oldID:t,saved:!1})},this.onFloorRemoveClick=function(l,e){l.preventDefault(),confirm({msg:"Are you sure to delete "+e.oldID+" floor?"}).then(function(){t(e.oldID).removeFloor(),n.$apply(function(){o.getFloors()})},function(){})}}],template:'\n      <div class="container">\n        <div class="row">\n          <div class="col-sm-12">\n            <div class="page-header">\n              <h1>Setup your floors</h1>\n            </div>\n            <table ng-if="$ctrl.floors" class="table table-striped admin-table">\n              <thead>\n                <tr>\n                  <th>id</th>\n                  <th>Title</th>\n                  <th>Map source</th>\n                  <th>Map width</th>\n                  <th class="text-center">Actions</th>\n                </tr>\n              </thead>\n              <tbody>\n\n                <tr ng-repeat="floor in $ctrl.floors">\n                  <td>\n                    <div class="form-group">\n                      <input type="text" ng-model="floor.id" class="form-control" placeholder="no id">\n                    </div>\n                  </th>\n                  <td>\n                    <div class="form-group">\n                      <input type="text" ng-model="floor.title" class="form-control" placeholder="no title">\n                    </div>\n                  </th>\n                  <td>\n                    <div class="form-group">\n                      <input type="text" ng-model="floor.mapSrc" class="form-control" placeholder="no map">\n                    </div>\n                  </th>\n                  <td>\n                    <div class="form-group">\n                      <input type="number" ng-model="floor.width" min="0" max="2000" class="form-control">\n                    </div>\n                  </th>\n                  <td>\n                    <div class="row">\n                      <div class="col-xs-6 col-thinpad-right">\n                        <button type="button" ng-click="$ctrl.onFloorSaveClick($event, floor)" class="btn btn-primary">Save</button>\n                      </div>\n                      <div class="col-xs-6 col-thinpad-left">\n                        <button ng-if="floor.saved != false" type="button" ng-click="$ctrl.onFloorRemoveClick($event, floor)" class="btn btn-danger">Remove</button>\n                      </div>\n                    </div>\n                  </th>\n                </tr>\n\n                <tr>\n                  <td></th>\n                  <td></th>\n                  <td></th>\n                  <td></th>\n                  <td>\n                    <button type="button" ng-click="$ctrl.onFloorCreateClick($event)" class="btn btn-default">Add</button>\n                  </th>\n                </tr>\n              </tbody>\n            </table>\n          </div>\n        </div>\n      </div>\n    '});
+
+/***/ },
+/* 56 */
 /***/ function(module, exports) {
 
 	/**
@@ -56578,15 +56839,15 @@
 	})(window, window.angular);
 
 /***/ },
-/* 51 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(52);
+	__webpack_require__(58);
 	module.exports = 'LocalStorageModule';
 
 
 /***/ },
-/* 52 */
+/* 58 */
 /***/ function(module, exports) {
 
 	/**
@@ -57137,15 +57398,15 @@
 	})(window, window.angular);
 
 /***/ },
-/* 53 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(54);
+	__webpack_require__(60);
 	module.exports = 'ngAnimate';
 
 
 /***/ },
-/* 54 */
+/* 60 */
 /***/ function(module, exports) {
 
 	/**
@@ -61290,22 +61551,10 @@
 
 
 /***/ },
-/* 55 */
+/* 61 */
 /***/ function(module, exports) {
 
-	"use strict";angular.module("CiklumSpace").config(["$locationProvider","$stateProvider","$logProvider","$urlRouterProvider","localStorageServiceProvider",function(e,o,t,n,r){e.hashPrefix(""),e.html5Mode(!0),t.debugEnabled(!0),o.state({name:"home",url:"/",template:"<homepage></homepage>"}),o.state({name:"floor",url:"/floor/:floorID",template:"<floor></floor>"}),o.state({name:"login",url:"/login",template:"<entry-login></entry-lofin>"}),o.state({name:"signup",url:"/signup",template:"<entry-register></entry-register>"}),n.otherwise("/"),r.setPrefix("ciklumspace")}]).controller("CiklumSpace.Controller",["$scope","$rootScope","$log","localStorageService","User","Notifications","Status",function(e,o,t,n,r,a,i){var c=this;this.$onInit=function(){r.init(),c.checkDBconnection()},this.checkDBconnection=function(){i.serverRequest.dbconnection(function(e){e.dbconnected||a.add(a.codes.dbNotConnected)})}}]).run(["$rootScope","$state","User",function(e,o,t){e.$on("$stateChangeSuccess",function(e,n){!t.authorized()&&n.data&&n.data.authorization&&n.data.redirectTo&&o.go(n.data.redirectTo)})}]).constant("CONFIG",{env:"development",appDomain_local:"http://localhost:3000",appDomain_remote:"https://ciklumspace.herokuapp.com",appName:"Ciklum OfficeSpace"});
-
-/***/ },
-/* 56 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";angular.module("modal",[]),__webpack_require__(57);
-
-/***/ },
-/* 57 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";var colors=__webpack_require__(48);angular.module("modal").component("modal",{controller:["$scope","$rootScope","$stateParams","$timeout","Floor","Employees","User",function(t,a,e,n,o,i,l){var d=this,s=e.floorID,c=300,m=300,r=40,f={requiredField:1,uniqueField:2},u='<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>',p={headerColor:colors.themeColor,attached:"top",width:c,padding:15,zindex:1010,history:!1,focusInput:!1,autoOpen:!0,onClosing:function(){t.$apply(function(){o(s).setActiveSeatID(void 0)}),d.mapcanvas.deactivateAllSeats()},onClosed:function(){d.modal.iziModal("destroy"),d.modal.empty()}};this.config={attached:"RIGHT"},this.$onInit=function(){d.modal=window.jQuery("#modal")},t.$watch(l.authorized,function(t){d.authorized=t}),t.$watch(o(s).getActiveSeat,function(t){d.seat=t}),t.$watch(i.get,function(t){d.employees=t}),t.$watch(function(){return void 0!=d.authorized&&void 0!=d.seat&&void 0!=d.employees},function(t){t&&d.initSeatModal()}),a.$on("$stateChangeStart",function(t,a,e,n){a.name!=n.name&&d.modal&&(d.modal.iziModal("destroy"),d.modal.empty())}),this.initSeatModal=function(){d.authorized?d.initSeatEditModal():d.initSeatDetailsModal()},this.initSeatDetailsModal=function(){d.modal.html(d.getDetailsTemplate());var t=function(){switch(d.config.attached){case"LEFT":d.attachToLeft();break;case"RIGHT":d.attachToRight()}},a=Object.assign(p,{title:"Seat details",subtitle:"Only admin can change data here",onOpening:t});n(function(){d.modal.iziModal(a)},0)},this.initSeatEditModal=function(){d.modal.html(d.getEditTemplate());var t=function(){var t=d,a=d.modal.find(".modal-form"),e=d.modal.find("#modal-delete-btn"),n=a.find('input[name="userName"]'),o=a.find('input[name="employeeID"]'),i=a.find(".modal-form-control-container--employee"),l=a.find(".modal-employee-list");switch(d.config.attached){case"LEFT":d.attachToLeft();break;case"RIGHT":d.attachToRight()}a.find(".glyphicon-remove--employee").click(function(t){t.preventDefault(),d.clearEmployeeList()}),n.keyup(function(){var t=n.val().toLowerCase(),e=d.employees.slice(0).filter(function(a){return a.firstName.toLowerCase().indexOf(t)!=-1||a.lastName.toLowerCase().indexOf(t)!=-1||(a.firstName.toLowerCase()+" "+a.lastName.toLowerCase()).indexOf(t)!=-1}).map(function(t){return'<li data-id="'+t.id+'">'+t.firstName+" "+t.lastName+"</li>"}).sort();a.find(".glyphicon-remove--employee").remove(),l.html(e.length!=d.employees.length?e.join(""):"")}),l.click(function(t){var e=d.getEmployee(t.target.dataset.id);n.val(e.firstName+" "+e.lastName),o.val(e.id),l.html("");var s=a.find(".glyphicon-remove--employee");if(!s.length){var c=window.jQuery(u);c.click(function(t){t.preventDefault(),d.clearEmployeeList()}),i.append(c)}}),d.modal.find("input[required]").keyup(function(){this.value.length&&t.removeNotification({code:f.requiredField})}),d.modal.find(".modal-notification-msg").click(function(){t.removeNotification({code:this.dataset.code})}),a.submit(function(t){t.preventDefault(),d.emptyIDValidation()&&d.uniqueIDValidation()&&d.updateSeat()}),e.click(function(t){t.preventDefault(),d.removeSeat()})},a=Object.assign(p,{title:"Update seat",subtitle:"Fields with *asterisk must be unique",onOpening:t});n(function(){d.modal.iziModal(a)},0)},this.updateSeat=function(){var a=Object.assign({},d.seat);a.title=d.modal.find('input[name="title"]').val(),a.id=d.modal.find('input[name="seatID"]').val(),a.employeeID=d.modal.find('input[name="employeeID"]').val(),t.$apply(function(){o(s).updateSeat(d.seat.id,a)}),d.mapcanvas.updateSeat(d.seat.id,a),d.seat=void 0,d.modal.iziModal("close")},this.removeSeat=function(){d.mapcanvas.removeSeat(d.seat),t.$apply(function(){o(s).removeSeat(d.seat)}),d.seat=void 0,d.modal.iziModal("close")},this.emptyIDValidation=function(){var t=!0;return d.modal.find("input[required]").each(function(){this.value.length||(t=!1)}),t||d.addNotification({status:"ERROR",msg:"Fill all required fields",code:f.requiredField}),t},this.uniqueIDValidation=function(){var t=!0,a=d.modal.find('input[name="seatID"]').val();return a==d.seat.id?t:(t=void 0==o(s).getSeats().find(function(t){return t.id==a}),t||d.addNotification({status:"ERROR",msg:"Enter unique seat ID",code:f.uniqueField}),t)},this.clearEmployeeList=function(){d.modal.find('input[name="userName"]').val(""),d.modal.find('input[name="employeeID"]').val(""),d.modal.find(".modal-employee-list").html(""),d.modal.find(".glyphicon-remove--employee").remove()},this.getEmployee=function(t){return d.employees.find(function(a){return a.id==t})},this.setStatus=function(t){switch(t){case"ERROR":d.modal.addClass("modal-status--error");break;case"NONE":d.modal.removeClass("modal-status--error")}},this.addNotification=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};if(t.code){var a=d.modal.find(".modal-notification-msg");d.setStatus(t.status),a.attr("data-code",t.code),a.html(t.msg),n(function(){a.addClass("modal-notification-msg--active")},m)}},this.removeNotification=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};if(t.code){var a=d.modal.find('.modal-notification-msg[data-code="'+t.code+'"]');a.length&&(a.removeClass("modal-notification-msg--active"),n(function(){d.setStatus("NONE"),a.html("")},m))}},this.attachToLeft=function(){d.modal.css({left:c/2+r,right:"auto","margin-left":"0 !important"}),d.modal.find(".modal-navigation-left").css("display","none").off("click"),d.modal.find(".modal-navigation-right").css("display","block").click(function(t){t.preventDefault(),d.attachToRight()}),d.config.attached="LEFT"},this.attachToRight=function(){d.modal.css({left:"auto",right:c/2+r,"margin-right":"0 !important"}),d.modal.find(".modal-navigation-left").css("display","block").click(function(t){t.preventDefault(),d.attachToLeft()}),d.modal.find(".modal-navigation-right").css("display","none").off("click"),d.config.attached="RIGHT"},this.getDetailsTemplate=function(){var t=void 0!=d.seat.employeeID,a=d.getEmployee(d.seat.employeeID);return'\n            <form class="modal-form form-horizontal" autocomplete="off">\n              <div class="form-group">\n                <label class="col-xs-4 control-label col-thinpad-right">Seat title</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <p class="modal-input-value">'+(d.seat.title?d.seat.title:"<i>untitled</i>")+'</p>\n                </div>\n              </div>\n              <div class="form-group">\n                <label class="col-xs-4 control-label col-thinpad-right">Seat ID</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <p class="modal-input-value">'+d.seat.id+'</p>\n                </div>\n              </div>\n              <div class="form-group">\n                <label class="col-xs-4 control-label col-thinpad-right">Occupant</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <p class="modal-input-value">'+(t&&a?a.firstName+" "+a.lastName:"<i>free</i>")+'</p>\n                </div>\n              </div>\n            </form>\n            <div class="modal-notification-container">\n              <span class="modal-notification-msg"></span>\n            </div>\n            <span class="modal-navigation modal-navigation-left"></span>\n            <span class="modal-navigation modal-navigation-right"></span>\n          '},this.getEditTemplate=function(){var t=void 0!=d.seat.employeeID,a=d.getEmployee(d.seat.employeeID);return'\n            <form class="modal-form form-horizontal" autocomplete="off" novalidate>\n              <div class="form-group">\n                <label for="inputSeat1" class="col-xs-4 control-label col-thinpad-right">Title</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <input\n                    type="text"\n                    name="title"\n                    class="form-control modal-form-control"\n                    value="'+(d.seat.title?d.seat.title:"")+'"\n                    placeholder="untitled"\n                    tabindex="21"\n                    id="inputSeat1">\n                </div>\n              </div>\n              <div class="form-group">\n                <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">*Seat ID</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <input\n                    type="text"\n                    name="seatID"\n                    class="form-control modal-form-control"\n                    value="'+d.seat.id+'"\n                    placeholder="Unique seat ID"\n                    tabindex="22"\n                    required\n                    id="inputSeat2">\n                </div>\n              </div>\n              <div class="form-group">\n                <label for="inputSeat3" class="col-xs-4 control-label col-thinpad-right">Occupant</label>\n                <div class="col-xs-8 col-thinpad-left">\n                  <div class="modal-form-control-container modal-form-control-container--employee">\n                    <input\n                      type="text"\n                      name="userName"\n                      class="form-control modal-form-control modal-form-control--employee"\n                      value="'+(t&&a?a.firstName+" "+a.lastName:"")+'"\n                      placeholder="free"\n                      tabindex="23"\n                      id="inputSeat3">\n                    '+(t&&a?u:"")+'\n                  </div>\n\n                  <input\n                    type="hidden"\n                    name="employeeID"\n                    value="'+(t?d.seat.employeeID:"")+'"\n                    class="hidden">\n                  <div class="modal-employee-list-container">\n                    <ul class="modal-employee-list"></ul>\n                  </div>\n                </div>\n              </div>\n              <div class="form-group modal-form-group--last">\n                <div class="col-xs-6 col-thinpad-right">\n                  <button type="button" id="modal-delete-btn" class="btn btn-danger modal-btn-control" tabindex="25">Delete</button>\n                </div>\n                <div class="col-xs-6 col-thinpad-left">\n                  <button type="submit" class="btn btn-default modal-btn-control" tabindex="24">Save</button>\n                </div>\n              </div>\n            </form>\n            <div class="modal-notification-container">\n              <span class="modal-notification-msg"></span>\n            </div>\n            <span class="modal-navigation modal-navigation-left"></span>\n            <span class="modal-navigation modal-navigation-right"></span>\n          '}}],bindings:{mapcanvas:"<"},template:'\n      <div class="modal-container">\n        <div id="modal"></div>\n      </div>\n    '});
+	"use strict";angular.module("CiklumSpace").config(["$locationProvider","$stateProvider","$logProvider","$urlRouterProvider","localStorageServiceProvider",function(e,t,o,a,n){e.hashPrefix(""),e.html5Mode(!0),o.debugEnabled(!0),t.state({name:"home",url:"/",template:"<homepage></homepage>"}),t.state({name:"floor",url:"/floor/:floorID",template:"<floor></floor>"}),t.state({name:"admin",url:"/admin",data:{authorization:!0,redirectTo:"login"},template:"<admin></admin>"}),t.state({name:"login",url:"/login",template:"<entry-login></entry-lofin>"}),t.state({name:"signup",url:"/signup",template:"<entry-register></entry-register>"}),a.otherwise("/"),n.setPrefix("ciklumspace")}]).controller("CiklumSpace.Controller",["$scope","$rootScope","$log","localStorageService","User","Notifications","Status",function(e,t,o,a,n,r,i){var c=this;this.$onInit=function(){n.init(),c.checkDBconnection()},this.checkDBconnection=function(){i.serverRequest.dbconnection(function(e){e.dbconnected||r.add(r.codes.dbNotConnected)})}}]).run(["$rootScope","$state","User",function(e,t,o){e.$on("$stateChangeSuccess",function(e,a){!o.authorized()&&a.data&&a.data.authorization&&a.data.redirectTo&&t.go(a.data.redirectTo)})}]).constant("CONFIG",{env:"production",appDomain_local:"http://localhost:3000",appDomain_remote:"http://ciklumspace.herokuapp.com",appName:"Ciklum OfficeSpace"});
 
 /***/ }
 /******/ ]);

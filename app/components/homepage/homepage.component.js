@@ -3,13 +3,19 @@
 angular.
   module('homepage').
   component('homepage', {
-    controller: [
-      function HomepageCtrl() {
-        this.floors = [{
-          title: 'Floor #19',
-          id: 'floor19',
-        }];
-        this.$onInit = () => {};
+    controller: ['Floor',
+      function HomepageCtrl(Floor) {
+        this.floors = Floor().getAllConfigs()
+          .map(config => {
+            config.title = config.title || config.id;
+            return config;
+          })
+          .sort((a, b) => {
+            if (a.title < b.title) return -1;
+            if (a.title > b.title) return 1;
+            return 0;
+          });
+
       }
     ],
 
@@ -17,9 +23,13 @@ angular.
       <div class="container homepage">
         <div class="row">
           <div class="col-sm-3 col-sm-push-9">
+            <div ng-if="!$ctrl.floors.length">
+              <a ui-sref="admin" class="btn btn-default" style="width:100%">Create floors</a>
+            </div>
             <div class="list-group">
               <a ng-repeat="floor in $ctrl.floors" ui-sref="floor({floorID: floor.id})" class="list-group-item">{{floor.title}}</a>
             </div>
+
           </div>
 
           <div class="col-sm-9 col-sm-pull-3">

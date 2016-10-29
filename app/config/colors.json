@@ -1,5 +1,10 @@
 {
   "themeColor": "#fc8300",
   "themeSubcolor": "#26728c",
-  "themeColor_dark": "#42344e"
+  "themeColor_dark": "#42344e",
+  "successColor": "#5cb85c",
+  "infoColor": "#46b8da",
+  "warningColor": "#eea236",
+  "primaryColor": "#337ab7",
+  "dangerColor": "#d43f3a"
 }

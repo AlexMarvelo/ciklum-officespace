@@ -1,11 +1,11 @@
-.iziModal
+#modal.iziModal
   transition: border-color .3s ease-out
   padding-bottom: 15px
   overflow: visible !important
   margin-right: -150px
   &.isAttachedTop
     top: 70px
-  &-header
+  .iziModal-header
     transition: background-color .3s ease-out
   .modal
     &-btn-control
@@ -125,15 +125,14 @@
           transform: rotate(-65deg)
 
 
-
-.modal
+#modal.modal
   &-status
     &--error
-      border-bottom-color: $errorColor !important
+      border-bottom-color: $dangerColor !important
       .modal-notification-msg
-        background-color: rgba($errorColor, .5)
+        background-color: rgba($dangerColor, .5)
       .iziModal-header
-        background-color: $errorColor !important
+        background-color: $dangerColor !important
     &--success
       border-bottom-color: $successColor !important
       .modal-notification-msg

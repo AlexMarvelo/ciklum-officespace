@@ -16,14 +16,20 @@ angular.
         dbNotConnected: 503,
         svgNotSupported: 420,
         tooCloseSeat: 421,
+        idRequired: 422,
+        idUnique: 423,
+        seatNotFound: 424,
+        floorIDRequired: 425,
       };
       const disabled = ['success'];
 
       this.notifications = [];
       this.notificationsLog = [];
 
+
       const get = () => this.notifications;
       const getLog = () => this.notificationsLog;
+
 
       const add = (code, notification) => {
         if (notification) {
@@ -56,7 +62,7 @@ angular.
           break;
         case codes.success:
           newNotification = {
-            msg: 'Server request was executed successfully',
+            msg: 'Request was executed successfully',
             type: 'success',
             code: codes.success
           };
@@ -96,6 +102,34 @@ angular.
             code: codes.tooCloseSeat
           };
           break;
+        case codes.idRequired:
+          newNotification = {
+            msg: 'ID is required. Please, check this',
+            type: 'danger',
+            code: codes.idRequired
+          };
+          break;
+        case codes.idUnique:
+          newNotification = {
+            msg: 'ID must be unique. Please, check it',
+            type: 'danger',
+            code: codes.idUnique
+          };
+          break;
+        case codes.seatNotFound:
+          newNotification = {
+            msg: 'Seat with such ID wasn\'t found',
+            type: 'danger',
+            code: codes.seatNotFound
+          };
+          break;
+        case codes.floorIDRequired:
+          newNotification = {
+            msg: 'Floor ID is required for this action. Check it',
+            type: 'danger',
+            code: codes.floorIDRequired
+          };
+          break;
         }
         if (!newNotification) return;
         if (disabled.find(disabledKey => codes[disabledKey] == newNotification.code)) return;
@@ -106,6 +140,7 @@ angular.
         $timeout(() => remove(newNotification), timeout);
       };
 
+
       const remove = (notification) => {
         if (!notification || !notification.timestamp) return;
         let prevAmount = this.notifications.length;
@@ -114,6 +149,7 @@ angular.
           $log.debug(`- remove notification (code ${notification.code}, timestamp ${notification.timestamp})`);
         }
       };
+
 
       return {
         get,
