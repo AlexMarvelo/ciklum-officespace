@@ -22,13 +22,20 @@
   &-result-list
     padding-top: 10px
     padding-bottom: 10px
+    margin-bottom: 0
     background-color: $themeColor-light
+    &-container
+      overflow-y: scroll
   &-result-item
     padding: 5px 15px
     cursor: pointer
     &:hover,
     &:active
       background-color: $themeColor
+    &-subtitle
+      display: block
+      font-size: 12px
+      color: rgba(black,.6)
   &-result-item-disabled
     cursor: default
     &:hover,
