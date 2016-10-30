@@ -17,6 +17,12 @@ angular.
           uniqueField: 2,
         };
         const removeEmployeeIcon = '<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>';
+        const modalTools = `
+          <div class="modal-notification-container">
+            <span class="modal-notification-msg"></span>
+          </div>
+          <span class="modal-navigation modal-navigation-left"></span>
+          <span class="modal-navigation modal-navigation-right"></span>`;
         const modalFrame = {
           headerColor: colors.themeColor,
           attached: 'top',
@@ -29,9 +35,11 @@ angular.
           autoOpen: true,
           navigateArrows: false,
           navigateCaption: false,
+          overlayColor: 'rgba(0,0,0,0.1)',
           onClosing: () => {
             $scope.$apply(() => {
               Floor(floorID).setActiveSeat(undefined);
+              Employees.setActiveEmployee(undefined);
             });
             this.mapcanvas.deactivateAllSeats();
           },
@@ -40,6 +48,18 @@ angular.
             this.modal.empty();
           },
         };
+        const seatDetailsModal = Object.assign(modalFrame, {
+          title: 'Seat details',
+          subtitle: 'Only admin can change data here',
+        });
+        const seatEditModal = Object.assign(modalFrame, {
+          title: 'Update seat',
+          subtitle: 'Seat ID must be unique on the floor',
+        });
+        const employeeDetailsModal = Object.assign(modalFrame, {
+          title: 'Employee details',
+          subtitle: this.authorized ? 'You can change seat only' : 'Only admin can change employee data',
+        });
 
         this.config = {
           attached: 'RIGHT'
@@ -66,6 +86,18 @@ angular.
         );
 
         $scope.$watch(
+          Employees.getActiveEmployee,
+          employee => {
+            const oldEmlployee = this.employee;
+            this.employee = employee;
+            if (oldEmlployee && this.employee && oldEmlployee.id != this.employee.id) {
+              this.updateEmployeeDetailsModal();
+              return;
+            }
+          }
+        );
+
+        $scope.$watch(
           Employees.get,
           employees => {
             this.employees = employees;
@@ -82,10 +114,26 @@ angular.
           }
         );
 
+        $scope.$watch(
+          () => this.authorized != undefined &&
+                this.employee != undefined &&
+                this.employees != undefined,
+          (ready) => {
+            if (!ready) return;
+            if (this.seat != undefined) {
+              this.updateEmployeeDetailsModal();
+              return;
+            }
+            this.initEmployeeModal();
+          }
+        );
+
         $rootScope.$on('$stateChangeStart',
           (event, toState, toParams, fromState) => {
             if (toState.name == fromState.name) return;
             if (this.modal) {
+              Floor(floorID).setActiveSeat(undefined);
+              Employees.setActiveEmployee(undefined);
               this.modal.iziModal('destroy');
               this.modal.empty();
             }
@@ -94,145 +142,131 @@ angular.
 
 
         this.initSeatModal = () => {
-          if (this.authorized) {
-            this.initSeatEditModal();
-          } else {
-            this.initSeatDetailsModal();
+          const template = this.authorized ? this.getSeatEditTemplate() : this.getSeatDetailsTemplate();
+          this.modal.html(template + modalTools);
+          $timeout(() => {
+            this.modal.iziModal(this.authorized ?
+              Object.assign(seatEditModal, {
+                onOpening: this.initSeatEditModal,
+              }) :
+              Object.assign(seatDetailsModal, {
+                onOpening: this.initSeatDetailsModal,
+              })
+            );
+          }, 0);
+        };
+
+        this.initSeatDetailsModal = () => {
+          switch (this.config.attached) {
+          case 'LEFT':
+            this.attachToLeft();
+            break;
+          case 'RIGHT':
+            this.attachToRight();
           }
         };
 
-
-        this.initSeatDetailsModal = () => {
-          this.modal.html(this.getDetailsTemplate());
-
-          const init = () => {
-            switch (this.config.attached) {
-            case 'LEFT':
-              this.attachToLeft();
-              break;
-            case 'RIGHT':
-              this.attachToRight();
-            }
-          };
-
-          const seatDetailsModal = Object.assign(modalFrame, {
-            title: 'Seat details',
-            subtitle: 'Only admin can change data here',
-            onOpening: init,
-          });
-
-          $timeout(() => {
-            this.modal.iziModal(seatDetailsModal);
-          }, 0);
-        };
-
-
         this.initSeatEditModal = () => {
-          this.modal.html(this.getEditTemplate());
+          const self = this;
+          const form = this.modal.find('.modal-form');
+          const deleteBtn = this.modal.find('#modal-delete-btn');
 
-          const init = () => {
-            const self = this;
-            const form = this.modal.find('.modal-form');
-            const deleteBtn = this.modal.find('#modal-delete-btn');
+          const employeeNameField = form.find('input[name="userName"]');
+          const employeeIDField = form.find('input[name="employeeID"]');
+          const employeeFieldContainer = form.find('.modal-form-control-container--employee');
+          const unsetEmployeeIcon = form.find('.glyphicon-remove--employee');
+          const employeeList = form.find('.modal-employee-list');
 
-            const employeeNameField = form.find('input[name="userName"]');
-            const employeeIDField = form.find('input[name="employeeID"]');
-            const employeeFieldContainer = form.find('.modal-form-control-container--employee');
-            const unsetEmployeeIcon = form.find('.glyphicon-remove--employee');
-            const employeeList = form.find('.modal-employee-list');
+          switch (this.config.attached) {
+          case 'LEFT':
+            this.attachToLeft();
+            break;
+          case 'RIGHT':
+            this.attachToRight();
+          }
 
-            switch (this.config.attached) {
-            case 'LEFT':
-              this.attachToLeft();
-              break;
-            case 'RIGHT':
-              this.attachToRight();
-            }
-
-            unsetEmployeeIcon.click(event => {
-              event.preventDefault();
-              unsetEmployeeIcon.blur();
-              this.unsetEmployee();
-            });
-
-            employeeNameField.keyup(() => {
-              const query = employeeNameField.val().toLowerCase();
-              let newList = this.employees.slice(0)
-                .filter(employee =>
-                  employee.firstName.toLowerCase().indexOf(query) != -1 ||
-                  employee.lastName.toLowerCase().indexOf(query) != -1 ||
-                  (employee.firstName.toLowerCase() + ' ' + employee.lastName.toLowerCase()).indexOf(query) != -1
-                )
-                .map(employee => `<li data-id="${employee.id}">${employee.firstName} ${employee.lastName}</li>`)
-                .sort();
-              form.find('.glyphicon-remove--employee').remove();
-              employeeList.html(newList.length != this.employees.length ? newList.join('') : '');
-            });
-
-            employeeList.click(event => {
-              const employee = this.getEmployee(event.target.dataset.id);
-              employeeNameField.val(`${employee.firstName} ${employee.lastName}`);
-              employeeIDField.val(employee.id);
-              employeeList.html('');
-              const unsetEmployeeIcon = form.find('.glyphicon-remove--employee');
-              if (!unsetEmployeeIcon.length) {
-                const unsetEmployeeIcon = window.jQuery(removeEmployeeIcon);
-                unsetEmployeeIcon.click(event => {
-                  event.preventDefault();
-                  unsetEmployeeIcon.blur();
-                  this.unsetEmployee();
-                });
-                employeeFieldContainer.append(unsetEmployeeIcon);
-              }
-            });
-
-            this.modal.find('input[required]').keyup(function() {
-              if (this.value.length) self.removeNotification({code: notificationCodes.requiredField});
-            });
-
-            this.modal.find('.modal-notification-msg').click(function() {
-              self.removeNotification({code: this.dataset.code});
-            });
-
-            form.submit(event => {
-              event.preventDefault();
-              if (!this.emptyIDValidation() || !this.uniqueIDValidation()) return;
-              this.updateSeat();
-            });
-
-            deleteBtn.click(event => {
-              event.preventDefault();
-              deleteBtn.blur();
-              this.removeSeat();
-            });
-          };
-
-          const seatEditModal = Object.assign(modalFrame, {
-            title: 'Update seat',
-            subtitle: 'Fields with *asterisk must be unique',
-            onOpening: init,
+          unsetEmployeeIcon.click(event => {
+            event.preventDefault();
+            unsetEmployeeIcon.blur();
+            this.unsetEmployee();
           });
 
-          $timeout(() => {
-            this.modal.iziModal(seatEditModal);
-          }, 0);
+          employeeNameField.keyup(() => {
+            const query = employeeNameField.val().toLowerCase();
+            let newList = this.employees.slice(0)
+              .filter(employee =>
+                employee.firstName.toLowerCase().indexOf(query) != -1 ||
+                employee.lastName.toLowerCase().indexOf(query) != -1 ||
+                (employee.firstName.toLowerCase() + ' ' + employee.lastName.toLowerCase()).indexOf(query) != -1
+              )
+              .map(employee => `<li data-id="${employee.id}">${employee.firstName} ${employee.lastName}</li>`)
+              .sort();
+            form.find('.glyphicon-remove--employee').remove();
+            employeeList.html(newList.length != this.employees.length ? newList.join('') : '');
+          });
+
+          employeeList.click(event => {
+            const employee = this.getEmployee(event.target.dataset.id);
+            employeeNameField.val(`${employee.firstName} ${employee.lastName}`);
+            employeeIDField.val(employee.id);
+            employeeList.html('');
+            const unsetEmployeeIcon = form.find('.glyphicon-remove--employee');
+            if (!unsetEmployeeIcon.length) {
+              const unsetEmployeeIcon = window.jQuery(removeEmployeeIcon);
+              unsetEmployeeIcon.click(event => {
+                event.preventDefault();
+                unsetEmployeeIcon.blur();
+                this.unsetEmployee();
+              });
+              employeeFieldContainer.append(unsetEmployeeIcon);
+            }
+          });
+
+          this.modal.find('input[required]').keyup(function() {
+            if (this.value.length) self.removeNotification({code: notificationCodes.requiredField});
+          });
+
+          this.modal.find('.modal-notification-msg').click(function() {
+            self.removeNotification({code: this.dataset.code});
+          });
+
+          form.submit(event => {
+            event.preventDefault();
+            if (!this.emptyIDValidation() || !this.uniqueIDValidation()) return;
+            this.updateSeat();
+          });
+
+          deleteBtn.click(event => {
+            event.preventDefault();
+            deleteBtn.blur();
+            this.removeSeat();
+          });
         };
 
 
         this.updateSeat = () => {
           const employeeIDField = this.modal.find('input[name="employeeID"]');
-
           let newSeat = Object.assign({}, this.seat);
           newSeat.title = this.modal.find('input[name="title"]').val();
           newSeat.id = this.modal.find('input[name="seatID"]').val();
           newSeat.employeeID = employeeIDField.val().length ? employeeIDField.val() : undefined;
-
-          $scope.$apply(() => {
-            Floor(floorID).updateSeat(this.seat.id, newSeat);
-          });
-          this.mapcanvas.updateSeat(this.seat.id, newSeat);
-          this.seat = undefined;
-          this.modal.iziModal('close');
+          if (this.seat.title == newSeat.title &&
+              this.seat.id == newSeat.id &&
+              this.seat.employeeID == newSeat.employeeID) {
+            this.modal.iziModal('close');
+            return;
+          }
+          confirm({
+            msg: `Are you sure to update ${this.seat.id} with new values?`
+          })
+          .then(() => {
+            $scope.$apply(() => {
+              Floor(floorID).updateSeat(this.seat.id, newSeat);
+            });
+            this.mapcanvas.updateSeat(this.seat.id, newSeat);
+            this.modal.iziModal('close');
+          }, () => {})
+          .catch(error => $log.error(error));
         };
 
 
@@ -244,11 +278,10 @@ angular.
             msg: questionText
           })
           .then(() => {
-            this.mapcanvas.removeSeat(this.seat);
             $scope.$apply(() => {
               Floor(floorID).removeSeat(this.seat);
             });
-            this.seat = undefined;
+            this.mapcanvas.removeSeat(this.seat);
             this.modal.iziModal('close');
           }, () => {})
           .catch(error => $log.error(error));
@@ -263,6 +296,10 @@ angular.
           })
           .then(() => {
             this.clearEmployeeList();
+            this.seat.employeeID = undefined;
+            $scope.$apply(() => {
+              Floor(floorID).attachEmployeeToSeat(this.seat.id, undefined);
+            });
           }, () => {})
           .catch(error => $log.error(error));
         };
@@ -379,7 +416,7 @@ angular.
         };
 
 
-        this.getDetailsTemplate = () => {
+        this.getSeatDetailsTemplate = () => {
           const hasEmployee = this.seat.employeeID != undefined;
           const employee = this.getEmployee(this.seat.employeeID);
           return `
@@ -403,16 +440,11 @@ angular.
                 </div>
               </div>
             </form>
-            <div class="modal-notification-container">
-              <span class="modal-notification-msg"></span>
-            </div>
-            <span class="modal-navigation modal-navigation-left"></span>
-            <span class="modal-navigation modal-navigation-right"></span>
           `;
         };
 
 
-        this.getEditTemplate = () => {
+        this.getSeatEditTemplate = () => {
           const hasEmployee = this.seat.employeeID != undefined;
           const employee = this.getEmployee(this.seat.employeeID);
           return `
@@ -478,11 +510,142 @@ angular.
                 </div>
               </div>
             </form>
-            <div class="modal-notification-container">
-              <span class="modal-notification-msg"></span>
-            </div>
-            <span class="modal-navigation modal-navigation-left"></span>
-            <span class="modal-navigation modal-navigation-right"></span>
+          `;
+        };
+
+
+        this.initEmployeeModal = () => {
+          this.modal.html(this.getEmployeeDetailsTemplate() + modalTools);
+
+          $timeout(() => {
+            this.modal.iziModal(Object.assign(employeeDetailsModal,{
+              onOpening: this.initEmployeeModalContent,
+            }));
+          }, 0);
+        };
+
+
+        this.updateEmployeeDetailsModal = () => {
+          const title = this.modal.find('.iziModal-header-title');
+          title.empty();
+          title.html(employeeDetailsModal.title);
+          const subtitle = this.modal.find('.iziModal-header-subtitle');
+          subtitle.empty();
+          subtitle.html(employeeDetailsModal.subtitle);
+          const content = this.modal.find('.iziModal-content');
+          content.empty();
+          content.html(this.getEmployeeDetailsTemplate() + modalTools);
+          this.initEmployeeModalContent();
+        };
+
+
+        this.initEmployeeModalContent = () => {
+          const form = this.modal.find('form');
+
+          switch (this.config.attached) {
+          case 'LEFT':
+            this.attachToLeft();
+            break;
+          case 'RIGHT':
+            this.attachToRight();
+          }
+
+          this.loadEmployeeSeatID();
+
+          form.submit(event => {
+            event.preventDefault();
+            const seatID = form.find('input[name="seatID"]').val();
+            if (seatID == this.employee.seatID || (!seatID.length && !this.employee.seatID)) {
+              this.modal.iziModal('close');
+            }
+            let msg;
+            if (seatID.length) {
+              msg = `Are you sure to assign ${this.employee.firstName} ${this.employee.lastName} to the seat with id ${seatID}`;
+            } else {
+              msg = 'Are you sure to release seat from this occupant?';
+            }
+            confirm({
+              msg: msg
+            })
+            .then(() => {
+              if (seatID.length) {
+                $scope.$apply(() => {
+                  Floor(floorID).attachEmployeeToSeat(seatID, this.employee.id);
+                });
+                this.mapcanvas.activateOneSeat(seatID);
+              } else {
+                $scope.$apply(() => {
+                  Floor(floorID).attachEmployeeToSeat(this.employee.seatID, undefined);
+                });
+                this.mapcanvas.deactivateAllSeats();
+              }
+              this.modal.iziModal('close');
+            }, () => {});
+          });
+        };
+
+
+        this.loadEmployeeSeatID = () => {
+          if (this.employee.seatID) {
+            this.pasteEmployeeSeatIDBlock(this.employee.seatID);
+            this.mapcanvas.activateOneSeat({id: this.employee.seatID});
+          } else {
+            const seat = Floor(floorID).getSeatByEmployee(this.employee);
+            const seatFloorID = seat ? seat.floorID : undefined;
+            const seatID = seat ? seat.id : undefined;
+            if (seatFloorID != floorID && seatID) {
+              // TODO floor redirection
+            } else {
+              this.pasteEmployeeSeatIDBlock(seatID);
+              this.mapcanvas.activateOneSeat({id: seatID});
+              this.employee.seatID = seatID;
+            }
+          }
+        };
+
+
+        this.pasteEmployeeSeatIDBlock = (seatID) => {
+          const saveBlock = window.jQuery(`
+            <div class="form-group modal-form-group--last">
+              <div class="col-xs-6 col-thinpad-right">
+              </div>
+              <div class="col-xs-6 col-thinpad-left">
+                <button type="submit" class="btn btn-default modal-btn-control" tabindex="22">Save</button>
+              </div>
+            </div>`);
+          const form = this.modal.find('form');
+          const seatIDContainer = form.find('.modal-employeeSeatID-container');
+          if (this.authorized) {
+            seatIDContainer.html(`<input name="seatID" type="text" value="${seatID ? seatID : ''}" placeholder="free" class="form-control modal-form-control" id="inputEmployee1" tabindex="21">`);
+            form.append(saveBlock);
+          } else {
+            seatIDContainer.html('<p class="modal-input-value"><i>free</i></p>');
+          }
+        };
+
+
+        this.getEmployeeDetailsTemplate = () => {
+          return `
+            <form class="modal-form form-horizontal" action="#" autocomplete="off" novalidate>
+              <div class="form-group">
+                <label class="col-xs-4 control-label col-thinpad-right">Employee</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <p class="modal-input-value">${this.employee.firstName} ${this.employee.lastName}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-xs-4 control-label col-thinpad-right">Email</label>
+                <div class="col-xs-8 col-thinpad-left">
+                  <p class="modal-input-value">${this.employee.email}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-xs-4 control-label col-thinpad-right" for="inputEmployee1">Seat ID</label>
+                <div class="col-xs-8 col-thinpad-left modal-employeeSeatID-container">
+                  <p class="modal-input-value">Loading...</p>
+                </div>
+              </div>
+            </form>
           `;
         };
       }

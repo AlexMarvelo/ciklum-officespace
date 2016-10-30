@@ -29,11 +29,8 @@ class Mapcanvas {
               id: seat.id,
               x: seat.x,
               y: seat.y,
-              title: seat.title,
-              employeeID: seat.employeeID,
-              floorID: this.floorID,
             };
-            this.Floor(this.floorID).updateSeat(seat.id, updatedSeat);
+            this.Floor(this.floorID).updateSeatCoords(updatedSeat);
             this.Floor(this.floorID).setActiveSeat(updatedSeat);
           } else {
             seat.deactivate();
@@ -155,6 +152,17 @@ class Mapcanvas {
     this.seats.forEach(seat => seat.deactivate());
     this.$scope.$apply(() => {
       this.$scope.activeSeat = undefined;
+    });
+  }
+
+
+  activateOneSeat(seat) {
+    this.seats.forEach(s => {
+      if (s.id == seat.id) {
+        s.activate();
+      } else {
+        s.deactivate();
+      }
     });
   }
 
