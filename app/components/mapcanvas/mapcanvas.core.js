@@ -113,18 +113,28 @@ class Mapcanvas {
   }
 
 
-  updateSeat(seatID, newSeat) {
-    let seat = this.seats.find(s => s.id == seatID);
-    if (!seat) return;
-    seat.title = newSeat.title;
-    seat.id = newSeat.id;
-    seat.employeeID = newSeat.employeeID;
+  updateSeat(seatID, seat) {
+    let targetSeat = this.seats.find(s => s.id == seatID);
+    if (!targetSeat) {
+      this.Notifications.add(this.Notifications.codes.seatNotFound);
+      this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas`);
+      return;
+    }
+    targetSeat.title = seat.title;
+    targetSeat.id = seat.id;
+    targetSeat.employeeID = seat.employeeID;
   }
 
 
-  removeSeat(seat = {id: undefined}) {
-    this.seats.find(s => s.id == seat.id).remove();
-    this.seats = this.seats.filter(s => s.id != seat.id);
+  removeSeat(seat = {}) {
+    const targetSeat = this.seats.find(s => s.id == seat.id);
+    if (!targetSeat) {
+      this.Notifications.add(this.Notifications.codes.seatNotFound);
+      this.$log.error(`- ${seat.id} seat wasn\'t found on mapcanvas`);
+      return;
+    }
+    targetSeat.remove();
+    this.seats = this.seats.filter(s => s.id != targetSeat.id);
   }
 
 
