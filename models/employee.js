@@ -6,8 +6,7 @@ const employeeSchema = mongoose.Schema({
   firstName: String,
   lastName: String,
   email: String,
-  id: String,
-  seatID: String
+  id: String
 });
 
 
