@@ -43,7 +43,7 @@ angular.
         <div class="row">
           <div class="col-lg-10 col-lg-push-1">
             <div class="mapcanvas-container" id="mapcanvas-container" style="width: {{$ctrl.mapWidth ? $ctrl.mapWidth + 'px' : '100%'}}">
-              <img ng-src="{{$ctrl.mapSrc}}" class="mapcanvas-map" id="mapcanvas-map" alt="Loading of {{$ctrl.mapSrc}} failed">
+              <img ng-src="{{$ctrl.mapSrc}}" class="mapcanvas-map" id="mapcanvas-map" alt="Map loading failed">
               <div class="mapcanvas" id="mapcanvas"></div>
             </div>
           </div>

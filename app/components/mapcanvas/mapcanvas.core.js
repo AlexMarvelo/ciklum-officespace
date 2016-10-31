@@ -20,7 +20,7 @@ class Mapcanvas {
 
     this.$scope.$watch(
       'activeSeat',
-      (activeSeat = {id: undefined}) => {
+      (activeSeat = {}) => {
         this.seats.forEach(seat => {
           if (seat.id == activeSeat.id) {
             seat.x = activeSeat.x;
@@ -36,7 +36,6 @@ class Mapcanvas {
             seat.deactivate();
           }
         });
-
       }
     );
 
@@ -166,7 +165,7 @@ class Mapcanvas {
   }
 
 
-  activateOneSeat(seat) {
+  activateOneSeat(seat = {}) {
     this.seats.forEach(s => {
       if (s.id == seat.id) {
         s.activate();
