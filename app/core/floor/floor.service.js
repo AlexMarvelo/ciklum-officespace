@@ -198,7 +198,8 @@ angular.
           Notifications.add(Notifications.codes.floorIDRequired);
           return;
         }
-        const floor = this.floors[floorID];
+        let floor = this.floors[floorID];
+        if (!floor) floor = initFloorState;
         if (!floor.config) return { mapSrc: '', width: defaultWidth };
         return {
           id: floor.config.id || '',
