@@ -29,11 +29,8 @@ class Mapcanvas {
               id: seat.id,
               x: seat.x,
               y: seat.y,
-              title: seat.title,
-              employeeID: seat.employeeID,
-              floorID: this.floorID,
             };
-            this.Floor(this.floorID).updateSeat(seat.id, updatedSeat);
+            this.Floor(this.floorID).updateSeatCoords(updatedSeat);
             this.Floor(this.floorID).setActiveSeat(updatedSeat);
           } else {
             seat.deactivate();
@@ -116,18 +113,28 @@ class Mapcanvas {
   }
 
 
-  updateSeat(seatID, newSeat) {
-    let seat = this.seats.find(s => s.id == seatID);
-    if (!seat) return;
-    seat.title = newSeat.title;
-    seat.id = newSeat.id;
-    seat.employeeID = newSeat.employeeID;
+  updateSeat(seatID, seat) {
+    let targetSeat = this.seats.find(s => s.id == seatID);
+    if (!targetSeat) {
+      this.Notifications.add(this.Notifications.codes.seatNotFound);
+      this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas`);
+      return;
+    }
+    targetSeat.title = seat.title;
+    targetSeat.id = seat.id;
+    targetSeat.employeeID = seat.employeeID;
   }
 
 
-  removeSeat(seat = {id: undefined}) {
-    this.seats.find(s => s.id == seat.id).remove();
-    this.seats = this.seats.filter(s => s.id != seat.id);
+  removeSeat(seat = {}) {
+    const targetSeat = this.seats.find(s => s.id == seat.id);
+    if (!targetSeat) {
+      this.Notifications.add(this.Notifications.codes.seatNotFound);
+      this.$log.error(`- ${seat.id} seat wasn\'t found on mapcanvas`);
+      return;
+    }
+    targetSeat.remove();
+    this.seats = this.seats.filter(s => s.id != targetSeat.id);
   }
 
 
@@ -155,6 +162,17 @@ class Mapcanvas {
     this.seats.forEach(seat => seat.deactivate());
     this.$scope.$apply(() => {
       this.$scope.activeSeat = undefined;
+    });
+  }
+
+
+  activateOneSeat(seat) {
+    this.seats.forEach(s => {
+      if (s.id == seat.id) {
+        s.activate();
+      } else {
+        s.deactivate();
+      }
     });
   }
 

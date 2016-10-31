@@ -20,8 +20,9 @@ angular.
         idUnique: 423,
         seatNotFound: 424,
         floorIDRequired: 425,
+        employeeNotFound: 426,
       };
-      const disabled = ['success'];
+      const ignored = ['success'];
 
       this.notifications = [];
       this.notificationsLog = [];
@@ -48,7 +49,7 @@ angular.
           break;
         case codes.unauthorized:
           newNotification = {
-            msg: 'Authorization faild. Please, check email & password',
+            msg: 'Authorization failed. Please, check email & password',
             type: 'danger',
             code: codes.unauthorized
           };
@@ -62,7 +63,7 @@ angular.
           break;
         case codes.success:
           newNotification = {
-            msg: 'Request was executed successfully',
+            msg: 'Action was executed successfully',
             type: 'success',
             code: codes.success
           };
@@ -104,35 +105,42 @@ angular.
           break;
         case codes.idRequired:
           newNotification = {
-            msg: 'ID is required. Please, check this',
+            msg: 'ID is required. Action denied',
             type: 'danger',
             code: codes.idRequired
           };
           break;
         case codes.idUnique:
           newNotification = {
-            msg: 'ID must be unique. Please, check it',
+            msg: 'ID must be unique. Action denied',
             type: 'danger',
             code: codes.idUnique
           };
           break;
         case codes.seatNotFound:
           newNotification = {
-            msg: 'Seat with such ID wasn\'t found',
+            msg: 'Seat with such ID wasn\'t found. Action denied',
             type: 'danger',
             code: codes.seatNotFound
           };
           break;
         case codes.floorIDRequired:
           newNotification = {
-            msg: 'Floor ID is required for this action. Check it',
+            msg: 'Floor ID is required. Action denied',
             type: 'danger',
             code: codes.floorIDRequired
           };
           break;
+        case codes.employeeNotFound:
+          newNotification = {
+            msg: 'Employee with such ID wasn\'t found. Action denied',
+            type: 'danger',
+            code: codes.employeeNotFound
+          };
+          break;
         }
         if (!newNotification) return;
-        if (disabled.find(disabledKey => codes[disabledKey] == newNotification.code)) return;
+        if (ignored.find(ignoredKey => codes[ignoredKey] == newNotification.code)) return;
         newNotification.timestamp = (new Date()).toISOString();
         this.notifications.push(newNotification);
         this.notificationsLog.push(newNotification);

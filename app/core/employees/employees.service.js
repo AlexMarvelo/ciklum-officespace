@@ -30,9 +30,36 @@ angular.
       const get = () => this.employees;
 
 
+      const getActiveEmployee = () => this.activeEmployee;
+
+
+      const setActiveEmployee = (activeEmployee) => {
+        if (!activeEmployee) {
+          if (this.activeEmployee) $log.debug('- unset active employee');
+          this.activeEmployee = undefined;
+          return;
+        }
+        if (activeEmployee.id == undefined) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        const targetEmployee = this.employees.find(employee => employee.id == activeEmployee.id);
+        if (!targetEmployee) {
+          Notifications.add(Notifications.codes.employeeNotFound);
+          return;
+        }
+        this.activeEmployee = targetEmployee;
+        $log.debug(`- set active employee to ${this.activeEmployee.id}` +
+          `${this.activeEmployee.firstName && this.activeEmployee.lastName ? ' (' + this.activeEmployee.firstName + ' ' + this.activeEmployee.lastName + ')' : ''}`
+        );
+      };
+
+
       return {
         get,
-        serverRequest
+        serverRequest,
+        getActiveEmployee,
+        setActiveEmployee
       };
     }
   ]);

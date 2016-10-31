@@ -76,10 +76,52 @@ angular.
           return;
         }
         let seatIndex = this.floors[floorID].seats.indexOf(seat);
+        if (newSeat.employeeID && seat.employeeID != newSeat.employeeID) {
+          unattachEmployeeFromAllSeats({id: newSeat.employeeID});
+        }
         this.floors[floorID].seats.splice(seatIndex, 1, newSeat);
         localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- update seat ${seatID} on ${floorID}`);
+      };
+
+
+      const updateSeatCoords = (seat) => {
+        const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
+        if (seat.id == undefined) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        let targetSeat = this.floors[floorID].seats.find(s => s.id == seat.id);
+        if (!targetSeat) {
+          Notifications.add(Notifications.codes.seatNotFound);
+          return;
+        }
+        targetSeat.x = seat.x;
+        targetSeat.y = seat.y;
+        localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(`- update coords of seat ${seat.id} on ${floorID}`);
+      };
+
+
+      const unattachEmployeeFromAllSeats = (employee) => {
+        if (!employee.id) {
+          Notifications.add(Notifications.codes.idRequired);
+          return;
+        }
+        for (let floorID in this.floors) {
+          this.floors[floorID].seats.forEach(seat => {
+            if (seat.employeeID == employee.id) {
+              seat.employeeID = undefined;
+              $log.debug(`- unattach ${employee.id} from ${seat.id} seat on ${floorID} floor`);
+            }
+          });
+        }
       };
 
 
@@ -132,7 +174,7 @@ angular.
           return;
         }
         if (!activeSeat) {
-          if (this.activeSeat) $log.debug(`- unset active seat on the floor ${floorID}`);
+          if (this.activeSeat) $log.debug(`- unset active seat on ${floorID} floor`);
           this.activeSeat = undefined;
           return;
         }
@@ -146,7 +188,7 @@ angular.
           return;
         }
         this.activeSeat = targetSeat;
-        $log.debug(`- set active seat to ${this.activeSeat.id} on the floor ${floorID}`);
+        $log.debug(`- set active seat to ${this.activeSeat.id} on ${floorID} floor`);
       };
 
 
@@ -235,14 +277,48 @@ angular.
       };
 
 
+      const getSeatByEmployee = (employee) => {
+        const floorID = this.floorID;
+        const seat = this.floors[floorID].seats.find(s => s.employeeID == employee.id);
+        return seat;
+      };
+
+
+      const attachEmployeeToSeat = (seatID, employeeID) => {
+        const floorID = this.floorID;
+        if (!floorID) {
+          Notifications.add(Notifications.codes.floorIDRequired);
+          return;
+        }
+        let seat = this.floors[floorID].seats.find(s => s.id == seatID);
+        if (!seat) {
+          Notifications.add(Notifications.codes.seatNotFound);
+          return;
+        }
+        if (employeeID) {
+          unattachEmployeeFromAllSeats({id: employeeID});
+        }
+        seat.employeeID = employeeID;
+        localStorageService.set('floors', this.floors);
+        Notifications.add(Notifications.codes.success);
+        $log.debug(employeeID ?
+          `- attach ${employeeID} employee to ${seatID} seat` :
+          `- unattach employee from ${seatID} seat`
+        );
+      };
+
+
       return (floorID) => {
         this.floorID = floorID;
         return {
           get,
           getSeats,
+          getSeatByEmployee,
+          attachEmployeeToSeat,
           addSeat,
           removeSeat,
           updateSeat,
+          updateSeatCoords,
           cleanSeats,
           getActiveSeat,
           setActiveSeat,
