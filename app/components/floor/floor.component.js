@@ -8,7 +8,6 @@ angular.
         const floorID = $stateParams.floorID;
         this.$onInit = () => {
           this.config = Floor(floorID).getConfig();
-          console.log(this.config);
         };
       }
     ],
