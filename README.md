@@ -13,6 +13,7 @@ Application deployed on [Heroku server](http://ciklumspace.herokuapp.com/floor/f
 - passport.js
 - ES6 (with Babel)
 - Angular
+- jQuery
 - webpack
 - jade
 
