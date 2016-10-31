@@ -36,7 +36,7 @@ angular.
           autoOpen: true,
           navigateArrows: false,
           navigateCaption: false,
-          overlayColor: 'rgba(0,0,0,0.1)',
+          overlayColor: 'rgba(0,0,0,0.3)',
           onClosing: () => {
             $scope.$apply(() => {
               Floor(floorID).setActiveSeat(undefined);

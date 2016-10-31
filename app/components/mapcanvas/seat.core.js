@@ -7,7 +7,7 @@ class Seat {
     this.config = {
       radius: 8,
       strokeWidth: 8,
-      transitionDuration: 200,
+      transitionDuration: 300,
     };
 
     this.mapcanvas = mapcanvas;
@@ -71,7 +71,8 @@ class Seat {
     this.svg
       .addClass('seat--active')
       .animate(this.config.transitionDuration)
-      .fill(colors.themeColor_dark);
+      .radius(this.config.radius + this.config.strokeWidth/2)
+      .stroke({opacity: 0.8, width: 2 });
   }
 
 
@@ -80,7 +81,8 @@ class Seat {
     this.svg
       .removeClass('seat--active')
       .animate(this.config.transitionDuration)
-      .fill(colors.themeSubcolor);
+      .radius(this.config.radius)
+      .stroke({opacity: 0.6, width: this.config.strokeWidth });
   }
 
 
