@@ -22,7 +22,7 @@ angular.
         floorIDRequired: 425,
         employeeNotFound: 426,
       };
-      const ignored = [];
+      const ignored = ['success'];
 
       this.notifications = [];
       this.notificationsLog = [];

@@ -48,15 +48,15 @@ angular.
             this.modal.empty();
           },
         };
-        const seatDetailsModal = Object.assign(modalFrame, {
+        const seatDetailsModal = Object.assign({}, modalFrame, {
           title: 'Seat details',
           subtitle: 'Only admin can change data here',
         });
-        const seatEditModal = Object.assign(modalFrame, {
+        const seatEditModal = Object.assign({}, modalFrame, {
           title: 'Update seat',
           subtitle: 'Seat ID must be unique on the floor',
         });
-        const employeeDetailsModal = Object.assign(modalFrame, {
+        const employeeDetailsModal = Object.assign({}, modalFrame, {
           title: 'Employee details',
           subtitle: this.authorized ? 'You can change seat only' : 'Only admin can change employee data',
         });
@@ -142,18 +142,21 @@ angular.
 
 
         this.initSeatModal = () => {
-          const template = this.authorized ? this.getSeatEditTemplate() : this.getSeatDetailsTemplate();
-          this.modal.html(template + modalTools);
-          $timeout(() => {
-            this.modal.iziModal(this.authorized ?
-              Object.assign(seatEditModal, {
+          if (this.authorized) {
+            this.modal.html(this.getSeatEditTemplate() + modalTools);
+            $timeout(() => {
+              this.modal.iziModal(Object.assign({}, seatEditModal, {
                 onOpening: this.initSeatEditModal,
-              }) :
-              Object.assign(seatDetailsModal, {
+              }));
+            }, 0);
+          } else {
+            this.modal.html(this.getSeatDetailsTemplate() + modalTools);
+            $timeout(() => {
+              this.modal.iziModal(Object.assign({}, seatDetailsModal, {
                 onOpening: this.initSeatDetailsModal,
-              })
-            );
-          }, 0);
+              }));
+            }, 0);
+          }
         };
 
         this.initSeatDetailsModal = () => {
@@ -516,9 +519,8 @@ angular.
 
         this.initEmployeeModal = () => {
           this.modal.html(this.getEmployeeDetailsTemplate() + modalTools);
-
           $timeout(() => {
-            this.modal.iziModal(Object.assign(employeeDetailsModal,{
+            this.modal.iziModal(Object.assign({}, employeeDetailsModal, {
               onOpening: this.initEmployeeModalContent,
             }));
           }, 0);
@@ -557,12 +559,13 @@ angular.
             const seatID = form.find('input[name="seatID"]').val();
             if (seatID == this.employee.seatID || (!seatID.length && !this.employee.seatID)) {
               this.modal.iziModal('close');
+              return;
             }
             let msg;
             if (seatID.length) {
-              msg = `Are you sure to assign ${this.employee.firstName} ${this.employee.lastName} to the seat with id ${seatID}`;
+              msg = `Are you sure to attach ${this.employee.firstName} ${this.employee.lastName} to the ${seatID} seat?`;
             } else {
-              msg = 'Are you sure to release seat from this occupant?';
+              msg = `Are you sure to unattach ${this.employee.firstName} ${this.employee.lastName} from ${this.employee.seatID} seat?`;
             }
             confirm({
               msg: msg
