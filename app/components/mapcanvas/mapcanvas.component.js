@@ -11,7 +11,6 @@ angular.
         const floorMapConfig = Floor(floorID).getConfig();
         this.mapSrc = floorMapConfig.mapSrc;
         this.mapWidth = floorMapConfig.width;
-        // Floor(floorID).cleanSeats();
 
         this.mapcanvas = new Mapcanvas($scope, $log, floorID, {
           Notifications,
@@ -28,6 +27,9 @@ angular.
           const img = document.getElementById('mapcanvas-map');
           img.addEventListener('load', () => {
             this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
+            $scope.$apply(() => {
+              this.mapcanvas.ready = true;
+            });
             this.mapcanvas.setSeats(Floor(floorID).getSeats());
           });
         };

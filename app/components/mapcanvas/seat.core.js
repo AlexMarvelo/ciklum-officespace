@@ -31,15 +31,11 @@ class Seat {
     });
 
 
-    this.svg.click(event => {
-      event.preventDefault();
-      this.onSelect();
-    });
-
     this.svg.on('dragstart.seat', event => {
       this.oldX = event.detail.p.x;
       this.oldY = event.detail.p.y;
     });
+
 
     this.svg.on('dragend.seat', event => {
       const newX = event.detail.p.x;
@@ -71,8 +67,8 @@ class Seat {
     this.svg
       .addClass('seat--active')
       .animate(this.config.transitionDuration)
-      .radius(this.config.radius + this.config.strokeWidth/2)
-      .stroke({opacity: 0.8, width: 2 });
+      .radius(this.config.radius + 2)
+      .stroke({opacity: 0.4, width: 6 });
   }
 
 

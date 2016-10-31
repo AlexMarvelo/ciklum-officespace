@@ -6,8 +6,8 @@ const confirm = require('../confirm/confirm.core');
 angular.
   module('modal').
   component('modal', {
-    controller: ['$scope', '$rootScope', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'User',
-      function ModalCtrl($scope, $rootScope, $stateParams, $timeout, $log, Floor, Employees, User) {
+    controller: ['$scope', '$rootScope', '$state', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'User',
+      function ModalCtrl($scope, $rootScope, $state, $stateParams, $timeout, $log, Floor, Employees, User) {
         const floorID = $stateParams.floorID;
         const modalWidth = 300;
         const modalNotificationDelay = 300;
@@ -82,6 +82,7 @@ angular.
           Floor(floorID).getActiveSeat,
           seat => {
             this.seat = seat;
+            if (this.seat) this.mapcanvas.activateOneSeat(this.seat);
           }
         );
 
@@ -114,7 +115,8 @@ angular.
         $scope.$watch(
           () => this.authorized != undefined &&
                 this.seat != undefined &&
-                this.employees != undefined,
+                this.employees != undefined &&
+                this.mapcanvas.ready,
           (ready) => {
             if (!ready) return;
             this.initSeatModal();
@@ -124,7 +126,8 @@ angular.
         $scope.$watch(
           () => this.authorized != undefined &&
                 this.employee != undefined &&
-                this.seats != undefined,
+                this.seats != undefined &&
+                this.mapcanvas.ready,
           (ready) => {
             if (!ready) return;
             if (this.seat != undefined) {
@@ -137,10 +140,11 @@ angular.
 
         $rootScope.$on('$stateChangeStart',
           (event, toState, toParams, fromState) => {
-            if (toState.name == fromState.name) return;
-            if (this.modal) {
+            if (toState.name != fromState.name) {
               Floor(floorID).setActiveSeat(undefined);
               Employees.setActiveEmployee(undefined);
+            }
+            if (this.modal) {
               this.modal.iziModal('destroy');
               this.modal.empty();
             }
@@ -347,7 +351,7 @@ angular.
             return;
           }
           confirm({
-            msg: `Are you sure to update ${this.seat.id} seat with new values?`
+            msg: `Are you sure to update ${this.seat.title || this.seat.id} seat with new values?`
           })
           .then(() => {
             this.mapcanvas.updateSeat(this.seat.id, newSeat);
@@ -434,11 +438,6 @@ angular.
         };
 
 
-        this.getEmployee = (employeeID) => {
-          return this.employees.find(employee => employee.id == employeeID);
-        };
-
-
         this.getSeatDetailsTemplate = () => {
           const hasEmployee = this.seat.employeeID != undefined;
           const employee = this.getEmployee(this.seat.employeeID);
@@ -447,7 +446,7 @@ angular.
               <div class="form-group">
                 <label class="col-xs-4 control-label col-thinpad-right">Seat title</label>
                 <div class="col-xs-8 col-thinpad-left">
-                  <p class="modal-input-value">${this.seat.title ? this.seat.title : '<i>untitled</i>'}</p>
+                  <p class="modal-input-value">${this.seat.title || '<i>untitled</i>'}</p>
                 </div>
               </div>
               <div class="form-group">
@@ -479,7 +478,7 @@ angular.
                     type="text"
                     name="title"
                     class="form-control modal-form-control"
-                    value="${this.seat.title ? this.seat.title : ''}"
+                    value="${this.seat.title || ''}"
                     placeholder="untitled"
                     tabindex="21"
                     id="inputSeat1">
@@ -536,6 +535,11 @@ angular.
         };
 
 
+        this.getEmployee = (employeeID) => {
+          return this.employees.find(employee => employee.id == employeeID);
+        };
+
+
 
 
         // ----------------------
@@ -587,12 +591,12 @@ angular.
               this.modal.iziModal('close');
               return;
             }
-            const seat = this.seats.find(s => s.id == seatID);
+            const seat = this.getSeats(seatID);
             let msg;
             if (seatID.length) {
-              msg = `Are you sure to attach ${this.employee.firstName} ${this.employee.lastName} to ${seat.title ? seat.title : seat.id} seat?`;
+              msg = `Are you sure to attach ${this.employee.firstName} ${this.employee.lastName} to ${seat.title || seat.id} seat?`;
             } else {
-              msg = `Are you sure to unattach ${this.employee.firstName} ${this.employee.lastName} from ${seat.title ? seat.title : seat.id} seat?`;
+              msg = `Are you sure to unattach ${this.employee.firstName} ${this.employee.lastName} from ${seat.title || seat.id} seat?`;
             }
             confirm({
               msg: msg
@@ -616,19 +620,13 @@ angular.
 
 
         this.loadEmployeeSeatID = () => {
-          if (this.employee.seat) {
-            this.pasteEmployeeSeatBlock(this.employee.seat);
-            this.mapcanvas.activateOneSeat(this.employee.seat);
-          } else {
-            const seat = Floor(floorID).getSeatByEmployee(this.employee);
-            this.employee.seat = seat;
-            if (this.employee.seat && this.employee.seat.floorID != floorID) {
-              // TODO floor redirection
-            } else {
-              this.pasteEmployeeSeatBlock();
-              this.mapcanvas.activateOneSeat(this.employee.seat);
-            }
+          this.employee.seat = Floor(floorID).getSeatByEmployee(this.employee);
+          if (this.employee.seat && this.employee.seat.floorID != floorID) {
+            this.pasteEmployeeAnotherSeatBlock();
+            return;
           }
+          this.pasteEmployeeSeatBlock();
+          this.mapcanvas.activateOneSeat(this.employee.seat);
         };
 
 
@@ -677,19 +675,19 @@ angular.
                 seat.id.toLowerCase().indexOf(query) != -1 ||
                 (seat.title && seat.title.toLowerCase().indexOf(query) != -1)
               )
-              .map(seat => `<li data-id="${seat.id}">${seat.title ? seat.title : seat.id}</li>`)
+              .map(seat => `<li data-id="${seat.id}">${seat.title || seat.id}</li>`)
               .sort();
             form.find('.glyphicon-remove--seat').remove();
             seatList.html(query.length ? newList.join('') : '');
           });
 
           seatList.click(event => {
-            const seat = this.seats.find(s => s.id == event.target.dataset.id);
+            const seat = this.getSeats(event.target.dataset.id);
             if (!seat) {
               $log.error('- seat with such ID not found');
               return;
             }
-            seatTitleField.val(`${seat.title ? seat.title : seat.id}`);
+            seatTitleField.val(`${seat.title || seat.id}`);
             seatIDField.val(seat.id);
             seatList.html('');
             this.mapcanvas.activateOneSeat(seat);
@@ -705,13 +703,27 @@ angular.
         };
 
 
+        this.pasteEmployeeAnotherSeatBlock = () => {
+          const form = this.modal.find('form');
+          const seatIDContainer = form.find('.modal-form-control-container--seat');
+          seatIDContainer.html(`
+            <p class="modal-input-value">${this.employee.seat.title || this.employee.seat.id}</p>
+            <p class="modal-input-value">(This employee is occupying the seat on <a href="/floor/${this.employee.seat.floorID}" class="modal-link--floor">${this.employee.seat.floorID} floor</a>)</p>
+          `);
+          form.find('.modal-link--floor').click(event => {
+            event.preventDefault();
+            $state.go('floor', {floorID: this.employee.seat.floorID});
+          });
+        };
+
+
         this.unsetSeat = () => {
           if (!this.employee.seat) {
             this.mapcanvas.deactivateAllSeats();
             this.clearSeatsList();
             return;
           }
-          const questionText = `Are you sure you want to unattach ${this.employee.firstName} ${this.employee.lastName} from ${this.employee.seat.title ? this.employee.seat.title : this.employee.seat.id} seat?`;
+          const questionText = `Are you sure you want to unattach ${this.employee.firstName} ${this.employee.lastName} from ${this.employee.seat.title || this.employee.seat.id} seat?`;
           confirm({
             msg: questionText
           })
@@ -764,6 +776,9 @@ angular.
         };
 
 
+        this.getSeat = (seatID) => {
+          return this.seats.find(seat => seat.id == seatID);
+        };
       }
     ],
 

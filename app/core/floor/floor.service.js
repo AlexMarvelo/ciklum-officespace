@@ -281,7 +281,12 @@ angular.
       const getSeatByEmployee = (employee) => {
         const floorID = this.floorID;
         const seat = this.floors[floorID].seats.find(s => s.employeeID == employee.id);
-        return seat;
+        if (seat) return seat;
+        for (let fID in this.floors) {
+          if (fID == floorID) continue;
+          let seat = this.floors[fID].seats.find(s => s.employeeID == employee.id);
+          if (seat) return seat;
+        }
       };
 
 
