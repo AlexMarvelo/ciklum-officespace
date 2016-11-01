@@ -52,7 +52,7 @@ angular.
           Notifications.add(Notifications.codes.idRequired);
           return;
         }
-        if (!this.floors[floorID]) this.floors[floorID] = initFloorState;
+        if (!this.floors[floorID]) this.floors[floorID] = Object.assign({}, initFloorState);
         this.floors[floorID].seats.push(seat);
         localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
@@ -199,7 +199,7 @@ angular.
           return;
         }
         let floor = this.floors[floorID];
-        if (!floor) floor = initFloorState;
+        if (!floor) floor = Object.assign({}, initFloorState);
         if (!floor.config) return { mapSrc: '', width: defaultWidth };
         return {
           id: floor.config.id || '',
@@ -232,7 +232,7 @@ angular.
         }
         let floor;
         if (!this.floors[floorID]) {
-          floor = this.floors[config.id] = initFloorState;
+          floor = this.floors[config.id] = Object.assign({}, initFloorState);
         } else if (floorID != config.id) {
           floor = this.floors[config.id] = Object.assign({}, this.floors[floorID]);
           delete this.floors[floorID];
