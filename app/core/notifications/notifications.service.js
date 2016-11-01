@@ -39,7 +39,7 @@ angular.
           this.notificationsLog.push(notification);
           $timeout(() => remove(notification), timeout);
           $log.debug('- add custom notification:');
-          $log.log(notification);
+          $log.debug(notification);
           return;
         }
         let newNotification;
