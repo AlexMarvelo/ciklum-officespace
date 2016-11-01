@@ -97,6 +97,7 @@ angular.
             if (this.userMode == 'selection') {
               this.modal.find('input[name="seatTitle"]').val(`${seat.title || seat.id}`);
               this.modal.find('input[name="seatID"]').val(seat.id);
+              this.mapcanvas.activateOneSeat(seat);
               this.disableSelectionMode();
               return;
             }
@@ -286,7 +287,7 @@ angular.
           const form = this.modal.find('.modal-form');
           const deleteBtn = this.modal.find('#modal-delete-btn');
 
-          const employeeNameField = form.find('input[name="userName"]');
+          const employeeNameField = form.find('input[name="employeeName"]');
           const employeeIDField = form.find('input[name="employeeID"]');
           const employeeFieldContainer = form.find('.modal-form-control-container--employee');
           const unsetEmployeeIcon = form.find('.glyphicon-remove--employee');
@@ -369,11 +370,15 @@ angular.
             this.modal.iziModal('close');
             return;
           }
+          const newEmployee = this.getEmployee(newSeat.employeeID);
           confirm({
             msg: `Are you sure to update ${this.seat.title || this.seat.id} seat with new values?`
           })
           .then(() => {
-            this.mapcanvas.updateSeat(this.seat.id, newSeat);
+            if (newEmployee) this.mapcanvas.unattachEmployeeFromSeat(newEmployee);
+            this.mapcanvas.updateSeat(this.seat.id, Object.assign({}, newSeat, {
+              tooltipTitle: newEmployee ? `${newEmployee.firstName} ${newEmployee.lastName}` : undefined
+            }));
             $scope.$apply(() => {
               Floor(floorID).updateSeat(this.seat.id, newSeat);
             });
@@ -409,6 +414,9 @@ angular.
           .then(() => {
             this.clearEmployeeList();
             this.seat.employeeID = undefined;
+            this.mapcanvas.updateSeat(this.seat.id, Object.assign({}, this.seat, {
+              tooltipTitle: undefined
+            }));
             $scope.$apply(() => {
               Floor(floorID).attachEmployeeToSeat(this.seat.id, undefined);
             });
@@ -450,7 +458,7 @@ angular.
 
 
         this.clearEmployeeList = () => {
-          this.modal.find('input[name="userName"]').val('');
+          this.modal.find('input[name="employeeName"]').val('');
           this.modal.find('input[name="employeeID"]').val('');
           this.modal.find('.modal-search-list').html('');
           this.modal.find('.glyphicon-remove--employee').remove();
@@ -523,7 +531,7 @@ angular.
                   <div class="modal-form-control-container modal-form-control-container--employee">
                     <input
                       type="text"
-                      name="userName"
+                      name="employeeName"
                       class="form-control modal-form-control modal-form-control--employee"
                       value="${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : ''}"
                       placeholder="free"
@@ -625,11 +633,13 @@ angular.
                 $scope.$apply(() => {
                   Floor(floorID).attachEmployeeToSeat(seatID, this.employee.id);
                 });
+                this.mapcanvas.setSeatTooltipTitle(seatID, `${this.employee.firstName} ${this.employee.lastName}`);
                 this.mapcanvas.activateOneSeat({id: seatID});
               } else {
                 $scope.$apply(() => {
                   Floor(floorID).attachEmployeeToSeat(this.employee.seatID, undefined);
                 });
+                this.mapcanvas.setSeatTooltipTitle(this.employee.seatID, undefined);
                 this.mapcanvas.deactivateAllSeats();
               }
               this.modal.iziModal('close');
@@ -763,8 +773,8 @@ angular.
             $scope.$apply(() => {
               Floor(floorID).attachEmployeeToSeat(this.employee.seat.id, undefined);
             });
+            this.mapcanvas.setSeatTooltipTitle(this.employee.seat.id, undefined);
             this.employee.seat = undefined;
-            this.mapcanvas.deactivateAllSeats();
             this.clearSeatsList();
           }, () => {})
           .catch(error => $log.error(error));

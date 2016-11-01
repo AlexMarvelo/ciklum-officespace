@@ -5,8 +5,8 @@ const Mapcanvas = require('./mapcanvas.core');
 angular.
   module('mapcanvas').
   component('mapcanvas', {
-    controller: ['$scope', '$log', '$stateParams', '$timeout', 'Notifications', 'User', 'Floor',
-      function MapCanvasCtrl($scope, $log, $stateParams, $timeout, Notifications, User, Floor) {
+    controller: ['$scope', '$log', '$stateParams', '$timeout', 'Notifications', 'User', 'Floor', 'Employees',
+      function MapCanvasCtrl($scope, $log, $stateParams, $timeout, Notifications, User, Floor, Employees) {
         const floorID = $stateParams.floorID;
         const floorMapConfig = Floor(floorID).getConfig();
         this.mapSrc = floorMapConfig.mapSrc;
@@ -16,6 +16,7 @@ angular.
           Notifications,
           User,
           Floor,
+          Employees,
         });
 
         this.$onInit = () => {

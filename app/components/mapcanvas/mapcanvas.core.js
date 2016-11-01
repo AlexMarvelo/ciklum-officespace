@@ -9,6 +9,7 @@ class Mapcanvas {
     this.Notifications = modules.Notifications;
     this.User = modules.User;
     this.Floor = modules.Floor;
+    this.Employees = modules.Employees;
 
     this.floorID = floorID;
     this.seats = [];
@@ -37,6 +38,12 @@ class Mapcanvas {
           }
         });
       }
+    );
+
+
+    this.$scope.$watch(
+      this.Employees.get,
+      employees => this.employees = employees
     );
 
 
@@ -84,7 +91,7 @@ class Mapcanvas {
   }
 
 
-  addSeat(coords = {x:0, y:0}, seatID = (new Date()).toISOString(), title, employeeID) {
+  addSeat(coords = {x:0, y:0}, seatID = (new Date()).toISOString(), employeeID) {
     if (!this.isPlaceFree(coords)) {
       this.$scope.$apply(() => {
         this.Notifications.add(this.Notifications.codes.tooCloseSeat);
@@ -101,7 +108,6 @@ class Mapcanvas {
       },
       coords,
       seatID,
-      title,
       employeeID
     );
     this.seats.push(seat);
@@ -122,10 +128,10 @@ class Mapcanvas {
     let targetSeat = this.seats.find(s => s.id == seatID);
     if (!targetSeat) {
       this.Notifications.add(this.Notifications.codes.seatNotFound);
-      this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas`);
+      this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
       return;
     }
-    targetSeat.title = seat.title;
+    this.setSeatTooltipTitle(targetSeat.id, seat.tooltipTitle);
     targetSeat.id = seat.id;
     targetSeat.employeeID = seat.employeeID;
   }
@@ -135,7 +141,7 @@ class Mapcanvas {
     const targetSeat = this.seats.find(s => s.id == seat.id);
     if (!targetSeat) {
       this.Notifications.add(this.Notifications.codes.seatNotFound);
-      this.$log.error(`- ${seat.id} seat wasn\'t found on mapcanvas`);
+      this.$log.error(`- ${seat.id} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
       return;
     }
     targetSeat.remove();
@@ -145,6 +151,7 @@ class Mapcanvas {
 
   setSeats(seats = []) {
     seats.forEach(seat => {
+      const employee = this.employees.find(e => e.id == seat.employeeID);
       this.seats.push(new Seat(
         {
           draw: this.draw,
@@ -156,8 +163,8 @@ class Mapcanvas {
           y: seat.y
         },
         seat.id,
-        seat.title,
-        seat.employeeID
+        seat.employeeID,
+        employee ? `${employee.firstName} ${employee.lastName}` : 'free'
       ));
     });
   }
@@ -182,6 +189,30 @@ class Mapcanvas {
   }
 
 
+  setSeatTooltipTitle(seatID, title) {
+    const targetSeat = this.seats.find(seat => seat.id == seatID);
+    if (!targetSeat) {
+      this.Notifications.add(this.Notifications.codes.seatNotFound);
+      this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
+      return;
+    }
+    targetSeat.setTooltipTitle(title);
+  }
+
+
+  unattachEmployeeFromSeat(employee) {
+    if (!employee.id) {
+      this.Notifications.add(this.Notifications.codes.idRequired);
+      this.$log.error('- employee id is required for this action');
+      return;
+    }
+    const targetSeat = this.seats.find(seat => seat.employeeID == employee.id);
+    if (!targetSeat) {
+      return;
+    }
+    targetSeat.employeeID = undefined;
+    targetSeat.setTooltipTitle(undefined);
+  }
 }
 
 module.exports = Mapcanvas;
