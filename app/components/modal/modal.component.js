@@ -6,8 +6,8 @@ const confirm = require('../confirm/confirm.core');
 angular.
   module('modal').
   component('modal', {
-    controller: ['$scope', '$rootScope', '$state', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'User',
-      function ModalCtrl($scope, $rootScope, $state, $stateParams, $timeout, $log, Floor, Employees, User) {
+    controller: ['$scope', '$rootScope', '$state', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'Notifications', 'User',
+      function ModalCtrl($scope, $rootScope, $state, $stateParams, $timeout, $log, Floor, Employees, Notifications, User) {
         const floorID = $stateParams.floorID;
         const modalWidth = 300;
         const modalNotificationDelay = 300;
@@ -18,6 +18,7 @@ angular.
         };
         const unsetEmployeeIconTemplate = '<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>';
         const unsetSeatIconTemplate = '<span class="glyphicon glyphicon-remove glyphicon-remove--seat" aria-hidden="true"></span>';
+        const setSeatIconTemplate = '<span class="glyphicon glyphicon-plus glyphicon-plus--seat" aria-hidden="true"></span>';
         const modalTools = `
           <div class="modal-notification-container">
             <span class="modal-notification-msg"></span>
@@ -79,8 +80,26 @@ angular.
         );
 
         $scope.$watch(
+          User.getMode,
+          userMode => {
+            const oldMode = this.userMode;
+            this.userMode = userMode;
+            if (oldMode == 'selection' && this.userMode == undefined) {
+              this.disableSelectionMode();
+            }
+          }
+        );
+
+
+        $scope.$watch(
           Floor(floorID).getActiveSeat,
           seat => {
+            if (this.userMode == 'selection') {
+              this.modal.find('input[name="seatTitle"]').val(`${seat.title || seat.id}`);
+              this.modal.find('input[name="seatID"]').val(seat.id);
+              this.disableSelectionMode();
+              return;
+            }
             this.seat = seat;
             if (this.seat) this.mapcanvas.activateOneSeat(this.seat);
           }
@@ -591,7 +610,7 @@ angular.
               this.modal.iziModal('close');
               return;
             }
-            const seat = this.getSeats(seatID);
+            const seat = this.getSeat(seatID);
             let msg;
             if (seatID.length) {
               msg = `Are you sure to attach ${this.employee.firstName} ${this.employee.lastName} to ${seat.title || seat.id} seat?`;
@@ -650,6 +669,7 @@ angular.
           seatIDContainer.html(`
             <input name="seatTitle" type="text" value="${this.employee.seat ? this.employee.seat.title || this.employee.seat.id : ''}" placeholder="free" class="form-control modal-form-control" id="inputEmployee1" tabindex="21">
             <input name="seatID" type="hidden" value="${this.employee.seat ? this.employee.seat.id : ''}">
+            ${!this.employee.seat ? setSeatIconTemplate : ''}
             <div class="modal-search-list-container">
               <ul class="modal-search-list"></ul>
             </div>
@@ -659,6 +679,7 @@ angular.
 
           const seatTitleField = form.find('input[name="seatTitle"]');
           const seatIDField = form.find('input[name="seatID"]');
+          const setSeatIcon = form.find('.glyphicon-plus--seat');
           const unsetSeatIcon = form.find('.glyphicon-remove--seat');
           const seatList = form.find('.modal-search-list');
 
@@ -666,6 +687,12 @@ angular.
             event.preventDefault();
             unsetSeatIcon.blur();
             this.unsetSeat();
+          });
+
+          setSeatIcon.click(event => {
+            event.preventDefault();
+            setSeatIcon.blur();
+            this.setSeat();
           });
 
           seatTitleField.keyup(() => {
@@ -682,7 +709,7 @@ angular.
           });
 
           seatList.click(event => {
-            const seat = this.getSeats(event.target.dataset.id);
+            const seat = this.getSeat(event.target.dataset.id);
             if (!seat) {
               $log.error('- seat with such ID not found');
               return;
@@ -691,7 +718,7 @@ angular.
             seatIDField.val(seat.id);
             seatList.html('');
             this.mapcanvas.activateOneSeat(seat);
-
+            form.find('.glyphicon-plus--seat').remove();
             const unsetSeatIcon = window.jQuery(unsetSeatIconTemplate);
             seatIDContainer.append(unsetSeatIcon);
             unsetSeatIcon.click(event => {
@@ -714,6 +741,11 @@ angular.
             event.preventDefault();
             $state.go('floor', {floorID: this.employee.seat.floorID});
           });
+        };
+
+
+        this.setSeat = () => {
+          this.enableSelectionMode();
         };
 
 
@@ -741,10 +773,18 @@ angular.
 
         this.clearSeatsList = () => {
           const form = this.modal.find('form');
+          const seatIDContainer = form.find('.modal-form-control-container--seat');
+          const setSeatIcon = window.jQuery(setSeatIconTemplate);
           form.find('input[name="seatTitle"]').val('');
           form.find('input[name="seatID"]').val('');
           form.find('.modal-search-list').html('');
           form.find('.glyphicon-remove--seat').remove();
+          seatIDContainer.append(setSeatIcon);
+          setSeatIcon.click(event => {
+            event.preventDefault();
+            setSeatIcon.blur();
+            this.setSeat();
+          });
         };
 
 
@@ -778,6 +818,24 @@ angular.
 
         this.getSeat = (seatID) => {
           return this.seats.find(seat => seat.id == seatID);
+        };
+
+
+        this.enableSelectionMode = () => {
+          $scope.$apply(() => {
+            User.setMode('selection');
+          });
+          Notifications.add(null, {msg: 'Choose a seat for occupant'});
+          window.jQuery('.iziModal-overlay').fadeOut();
+          window.jQuery('.iziModal#modal').addClass('iziModal-selection-mode').fadeOut();
+        };
+
+
+        this.disableSelectionMode = () => {
+          this.userMode = undefined;
+          User.setMode(undefined);
+          window.jQuery('.iziModal-overlay').fadeIn();
+          window.jQuery('.iziModal#modal').removeClass('iziModal-selection-mode').fadeIn();
         };
       }
     ],

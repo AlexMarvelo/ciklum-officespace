@@ -48,8 +48,14 @@ class Mapcanvas {
         case 'draw':
           if (this.draw) this.draw.addClass('mapcanvas-draw-mode');
           break;
+        case 'selection':
+          if (this.draw) this.draw.addClass('mapcanvas-selection-mode');
+          break;
         default:
-          if (this.draw) this.draw.removeClass('mapcanvas-draw-mode');
+          if (this.draw) {
+            this.draw.removeClass('mapcanvas-draw-mode');
+            this.draw.removeClass('mapcanvas-selection-mode');
+          }
         }
       }
     );
