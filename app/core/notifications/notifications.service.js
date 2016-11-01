@@ -34,8 +34,12 @@ angular.
 
       const add = (code, notification) => {
         if (notification) {
+          notification.timestamp = (new Date()).toISOString();
           this.notifications.push(notification);
-          $log.debug(notification);
+          this.notificationsLog.push(notification);
+          $timeout(() => remove(notification), timeout);
+          $log.debug('- add custom notification:');
+          $log.log(notification);
           return;
         }
         let newNotification;
