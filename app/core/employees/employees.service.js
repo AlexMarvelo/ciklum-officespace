@@ -4,7 +4,7 @@ angular.
   module('core.employees').
   factory('Employees', ['$log', '$resource', 'Notifications', 'CONFIG',
     function($log, $resource, Notifications, CONFIG) {
-      const serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/employees/:action`, {action: 'get'}, {
+      const serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/employee/:action`, {action: 'get'}, {
         get: {
           method: 'GET',
           params: {

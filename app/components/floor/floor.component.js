@@ -7,18 +7,25 @@ angular.
       function FloorCtrl($scope, $stateParams, Floor) {
         const floorID = $stateParams.floorID;
         this.$onInit = () => {
-          this.config = Floor(floorID).getConfig();
+          Floor(floorID).getConfig()
+            .then(config => {
+              $scope.$apply(() => {
+                this.config = config;
+              });
+            });
         };
       }
     ],
 
+    // <search></search>
+    // <mapcanvas></mapcanvas>
     template: `
-      <search></search>
-      <mapcanvas></mapcanvas>
-
       <div class="container">
-        <div class="page-header">
-          <h1>{{$ctrl.config.title || $ctrl.config.id}}</h1>
+        <p ng-if="!$ctrl.config" class="text-center"><br><br><br>Loading data...</p>
+        <div ng-if="$ctrl.config">
+          <div class="page-header">
+            <h1>{{$ctrl.config.title || $ctrl.config.id}}</h1>
+          </div>
         </div>
       </div>
     `,

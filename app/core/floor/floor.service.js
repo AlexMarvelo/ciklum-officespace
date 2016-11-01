@@ -4,24 +4,54 @@ angular.
   module('core.floor').
   factory('Floor', ['$log', '$resource', 'localStorageService', 'Notifications', 'CONFIG',
     function($log, $resource,localStorageService,  Notifications, CONFIG) {
-      this.floors = localStorageService.get('floors') || {};
+      this.floors = {};
       const initFloorState = {
         seats: [],
       };
       const defaultWidth = 945;
 
 
-      const serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/employees/:action`, {action: 'get'}, {
-        get: {
-          method: 'GET',
-          params: {
-            action: 'get'
-          }
-        }
-      });
+      // -----------
+      // floor utils
+      // -----------
 
 
-      const get = () => {
+      this.serverRequest = () => {
+        const floorID = this.floorID;
+        return $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/floor/:floorID/:action`, {action: 'getConfig'}, {
+          getConfig: {
+            method: 'GET',
+            params: {
+              floorID: floorID,
+              action: 'getconfig',
+            }
+          },
+          setConfig: {
+            method: 'POST',
+            params: {
+              floorID: floorID,
+              action: 'setconfig',
+            }
+          },
+          getAllConfigs: {
+            method: 'GET',
+            params: {
+              floorID: floorID,
+              action: 'getallconfigs'
+            }
+          },
+          removeFloor: {
+            method: 'POST',
+            params: {
+              floorID: floorID,
+              action: 'remove'
+            }
+          },
+        });
+      };
+
+
+      this.get = () => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -31,7 +61,7 @@ angular.
       };
 
 
-      const getSeats = () => {
+      this.getSeats = () => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -42,7 +72,7 @@ angular.
       };
 
 
-      const addSeat = (seat) => {
+      this.addSeat = (seat) => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -54,13 +84,13 @@ angular.
         }
         if (!this.floors[floorID]) this.floors[floorID] = Object.assign({}, initFloorState);
         this.floors[floorID].seats.push(seat);
-        localStorageService.set('floors', this.floors);
+        // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- add seat to ${floorID} floor with id: ${seat.id}`);
       };
 
 
-      const updateSeat = (seatID, newSeat = {}) => {
+      this.updateSeat = (seatID, newSeat = {}) => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -77,16 +107,16 @@ angular.
         }
         let seatIndex = this.floors[floorID].seats.indexOf(seat);
         if (newSeat.employeeID && seat.employeeID != newSeat.employeeID) {
-          unattachEmployeeFromAllSeats({id: newSeat.employeeID});
+          this.unattachEmployeeFromAllSeats({id: newSeat.employeeID});
         }
         this.floors[floorID].seats.splice(seatIndex, 1, newSeat);
-        localStorageService.set('floors', this.floors);
+        // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- update seat ${seatID} on ${floorID}`);
       };
 
 
-      const updateSeatCoords = (seat) => {
+      this.updateSeatCoords = (seat) => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -103,13 +133,13 @@ angular.
         }
         targetSeat.x = seat.x;
         targetSeat.y = seat.y;
-        localStorageService.set('floors', this.floors);
+        // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- update coords of seat ${seat.id} on ${floorID}`);
       };
 
 
-      const unattachEmployeeFromAllSeats = (employee) => {
+      this.unattachEmployeeFromAllSeats = (employee) => {
         if (!employee.id) {
           Notifications.add(Notifications.codes.idRequired);
           return;
@@ -125,7 +155,7 @@ angular.
       };
 
 
-      const removeSeat = (seat = {}) => {
+      this.removeSeat = (seat = {}) => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -135,15 +165,15 @@ angular.
           Notifications.add(Notifications.codes.idRequired);
           return;
         }
-        if (this.activeSeat.id == seat.id) setActiveSeat(undefined);
+        if (this.activeSeat.id == seat.id) this.setActiveSeat(undefined);
         this.floors[floorID].seats = this.floors[floorID].seats.filter(s => s.id != seat.id);
-        localStorageService.set('floors', this.floors);
+        // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
       };
 
 
-      const cleanSeats = () => {
+      this.cleanSeats = () => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -151,13 +181,13 @@ angular.
         }
         if (!this.floors[floorID]) return;
         this.floors[floorID].seats = [];
-        localStorageService.set('floors', this.floors);
+        // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- clean all seats om ${floorID} floor`);
       };
 
 
-      const getActiveSeat = () => {
+      this.getActiveSeat = () => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -167,7 +197,7 @@ angular.
       };
 
 
-      const setActiveSeat = (activeSeat) => {
+      this.setActiveSeat = (activeSeat) => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -192,93 +222,7 @@ angular.
       };
 
 
-      const getConfig = () => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        let floor = this.floors[floorID];
-        if (!floor) floor = Object.assign({}, initFloorState);
-        if (!floor.config) return { mapSrc: '', width: defaultWidth };
-        return {
-          id: floor.config.id || '',
-          title: floor.config.title || '',
-          mapSrc: floor.config.mapSrc || '',
-          width: floor.config.width || defaultWidth,
-        };
-      };
-
-
-      const setConfig = (config) => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (!config.id) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        if (!config.id.length) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        for (let fID in this.floors) {
-          if (fID == config.id && fID != floorID) {
-            Notifications.add(Notifications.codes.idUnique);
-            return;
-          }
-        }
-        let floor;
-        if (!this.floors[floorID]) {
-          floor = this.floors[config.id] = Object.assign({}, initFloorState);
-        } else if (floorID != config.id) {
-          floor = this.floors[config.id] = Object.assign({}, this.floors[floorID]);
-          delete this.floors[floorID];
-        } else {
-          floor = this.floors[floorID];
-        }
-        if (!floor.config) floor.config = {};
-        floor.config.id = config.id;
-        floor.config.title = config.title;
-        floor.config.mapSrc = config.mapSrc;
-        floor.config.width = config.width || defaultWidth;
-        localStorageService.set('floors', this.floors);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- set/update ${floorID} floor config`);
-      };
-
-
-      const getAllConfigs = () => {
-        let result = [];
-        for (let floorID in this.floors) {
-          let config = Object.assign({}, this.floors[floorID].config);
-          config.id = floorID;
-          result.push(config);
-        }
-        return result;
-      };
-
-
-      const removeFloor = () => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (!floorID) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        delete this.floors[floorID];
-        localStorageService.set('floors', this.floors);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- remove ${floorID} floor`);
-      };
-
-
-      const getSeatByEmployee = (employee) => {
+      this.getSeatByEmployee = (employee) => {
         const floorID = this.floorID;
         const seat = this.floors[floorID].seats.find(s => s.employeeID == employee.id);
         if (seat) return seat;
@@ -290,7 +234,7 @@ angular.
       };
 
 
-      const attachEmployeeToSeat = (seatID, employeeID) => {
+      this.attachEmployeeToSeat = (seatID, employeeID) => {
         const floorID = this.floorID;
         if (!floorID) {
           Notifications.add(Notifications.codes.floorIDRequired);
@@ -302,10 +246,10 @@ angular.
           return;
         }
         if (employeeID) {
-          unattachEmployeeFromAllSeats({id: employeeID});
+          this.unattachEmployeeFromAllSeats({id: employeeID});
         }
         seat.employeeID = employeeID;
-        localStorageService.set('floors', this.floors);
+        // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(employeeID ?
           `- attach ${employeeID} employee to ${seatID} seat` :
@@ -314,25 +258,140 @@ angular.
       };
 
 
+
+
+      // ----------------------
+      // floor config interface
+      // ----------------------
+
+
+      this.getConfig = () => {
+        const floorID = this.floorID;
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+
+          this.serverRequest().getConfig(response => {
+            if (response.status != Notifications.codes.success) {
+              throw response;
+            }
+            resolve(response.config);
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+      this.setConfig = (config) => {
+        const floorID = this.floorID;
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!config.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
+          for (let fID in this.floors) {
+            if (fID == config.id && fID != floorID) {
+              throw { status: Notifications.codes.idUnique };
+            }
+          }
+
+          let floor = this.floors[floorID] ? Object.assign({}, this.floors[floorID]) : Object.assign({}, initFloorState);
+          floor.config = floor.config || {};
+          floor.config.id = config.id;
+          floor.config.title = config.title;
+          floor.config.mapSource = config.mapSource;
+          floor.config.width = config.width || defaultWidth;
+
+          this.serverRequest().setConfig({config: floor.config}).$promise
+            .then(response => {
+              if (response.status != Notifications.codes.success) {
+                Notifications.add(response.status);
+                return;
+              }
+              this.floors[config.id] = floor;
+              Notifications.add(Notifications.codes.success);
+              $log.debug(`- set/update ${floorID} floor config`);
+              resolve(response);
+            });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+      this.getAllConfigs = () => {
+        return new Promise((resolve) => {
+          this.serverRequest().getAllConfigs(response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              return;
+            }
+            resolve(response.configs);
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+      this.removeFloor = () => {
+        const floorID = this.floorID;
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.idRequired };
+          }
+
+          this.serverRequest().removeFloor(response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              return;
+            }
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- remove ${floorID} floor`);
+            resolve(response);
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+
+
       return (floorID) => {
         this.floorID = floorID;
         return {
-          get,
-          getSeats,
-          getSeatByEmployee,
-          attachEmployeeToSeat,
-          addSeat,
-          removeSeat,
-          updateSeat,
-          updateSeatCoords,
-          cleanSeats,
-          getActiveSeat,
-          setActiveSeat,
-          serverRequest,
-          getConfig,
-          setConfig,
-          getAllConfigs,
-          removeFloor,
+          serverRequest: this.serverRequest,
+
+          get: this.get,
+          getSeats: this.getSeats,
+          getSeatByEmployee: this.getSeatByEmployee,
+          attachEmployeeToSeat: this.attachEmployeeToSeat,
+          addSeat: this.addSeat,
+          removeSeat: this.removeSeat,
+          updateSeat: this.updateSeat,
+          updateSeatCoords: this.updateSeatCoords,
+          cleanSeats: this.cleanSeats,
+          getActiveSeat: this.getActiveSeat,
+          setActiveSeat: this.setActiveSeat,
+
+          // config interface:
+          getConfig: this.getConfig,
+          getAllConfigs: this.getAllConfigs,
+          setConfig: this.setConfig,
+          removeFloor: this.removeFloor,
         };
       };
     }

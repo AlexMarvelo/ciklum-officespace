@@ -9,7 +9,7 @@ angular.
       function MapCanvasCtrl($scope, $log, $stateParams, $timeout, Notifications, User, Floor, Employees) {
         const floorID = $stateParams.floorID;
         const floorMapConfig = Floor(floorID).getConfig();
-        this.mapSrc = floorMapConfig.mapSrc;
+        this.mapSource = floorMapConfig.mapSource;
         this.mapWidth = floorMapConfig.width;
 
         this.mapcanvas = new Mapcanvas($scope, $log, floorID, {
@@ -46,7 +46,7 @@ angular.
         <div class="row">
           <div class="col-lg-10 col-lg-push-1">
             <div class="mapcanvas-container" id="mapcanvas-container" style="width: {{$ctrl.mapWidth ? $ctrl.mapWidth + 'px' : '100%'}}">
-              <img ng-src="{{$ctrl.mapSrc}}" class="mapcanvas-map" id="mapcanvas-map" alt="Map loading failed">
+              <img ng-src="{{$ctrl.mapSource}}" class="mapcanvas-map" id="mapcanvas-map" alt="Map loading failed">
               <div class="mapcanvas" id="mapcanvas"></div>
             </div>
           </div>
