@@ -53,6 +53,7 @@ class Seat {
           id: this.id,
           x: this.x,
           y: this.y,
+          moved: newX - this.oldX != 0 || newY - this.oldY != 0,
         };
       });
     });

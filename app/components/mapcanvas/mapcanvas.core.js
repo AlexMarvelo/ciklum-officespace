@@ -31,7 +31,7 @@ class Mapcanvas {
               x: seat.x,
               y: seat.y,
             };
-            this.Floor(this.floorID).updateSeatCoords(updatedSeat);
+            if (activeSeat.moved) this.Floor(this.floorID).updateSeatCoords(updatedSeat);
             this.Floor(this.floorID).setActiveSeat(updatedSeat);
           } else {
             seat.deactivate();
