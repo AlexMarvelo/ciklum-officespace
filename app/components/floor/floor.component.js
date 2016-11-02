@@ -12,14 +12,17 @@ angular.
               $scope.$apply(() => {
                 this.config = config;
               });
-            });
+            }, () => {});
         };
       }
     ],
 
-    // <search></search>
-    // <mapcanvas></mapcanvas>
+
+
     template: `
+      <search></search>
+      <mapcanvas></mapcanvas>
+
       <div class="container">
         <p ng-if="!$ctrl.config" class="text-center"><br><br><br>Loading data...</p>
         <div ng-if="$ctrl.config">
