@@ -13,6 +13,8 @@ angular.
 
 
 
+
+
       // -----------
       // floor utils
       // -----------
@@ -80,12 +82,25 @@ angular.
               action: 'acttachemployee'
             }
           },
+          removeSeat: {
+            method: 'POST',
+            params: {
+              seatID: seatID,
+              action: 'remove'
+            }
+          },
           getByFloor: {
             method: 'GET',
             params: {
               action: 'getbyfloor'
             }
           },
+          getSeatByEmployee: {
+            method: 'GET',
+            params: {
+              action: 'getbyemployee'
+            }
+          }
         });
       };
 
@@ -345,45 +360,65 @@ angular.
       };
 
 
-
-
-
-
-
-
-
-
-
-
-
       this.removeSeat = (seat = {}) => {
         const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (seat.id == undefined) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        if (this.activeSeat.id == seat.id) this.setActiveSeat(undefined);
-        this.floors[floorID].seats = this.floors[floorID].seats.filter(s => s.id != seat.id);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!seat.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
+
+          this.seatServerRequest(seat.id).removeSeat(response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            if (this.activeSeat.id == seat.id) this.setActiveSeat(undefined);
+            this.floors[floorID].seats = this.floors[floorID].seats.filter(s => s.id != seat.id);
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
+            resolve();
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
       };
 
 
-      this.getSeatByEmployee = (employee) => {
+      this.getSeatByEmployee = (employee = {}) => {
         const floorID = this.floorID;
-        const seat = this.floors[floorID].seats.find(s => s.employeeID == employee.id);
-        if (seat) return seat;
-        for (let fID in this.floors) {
-          if (fID == floorID) continue;
-          let seat = this.floors[fID].seats.find(s => s.employeeID == employee.id);
-          if (seat) return seat;
-        }
-      };
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!employee.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
 
+          const seat = this.floors[floorID].seats.find(s => s.employeeID == employee.id);
+          if (seat) {
+            resolve(seat);
+            return;
+          }
+          this.seatServerRequest().getSeatByEmployee({employeeID: employee.id}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            resolve(response.seat);
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
 
 
 
@@ -511,6 +546,8 @@ angular.
       return (floorID) => {
         this.floorID = floorID;
         return {
+          
+          // seats interface:
           getSeats: this.getSeats,
           loadSeats: this.loadSeats,
           getSeatByEmployee: this.getSeatByEmployee,

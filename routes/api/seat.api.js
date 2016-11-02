@@ -29,8 +29,16 @@ module.exports = (router) => {
       utils.attachEmployee(req, res, req.params.seatID, req.body.employeeID);
       break;
 
+    case 'remove':
+      utils.removeSeat(req, res, req.params.seatID);
+      break;
+
     case 'getbyfloor':
       utils.getByFloor(req, res, req.query.floorID);
+      break;
+
+    case 'getbyemployee':
+      utils.getSeatByEmployee(req, res, req.query.employeeID);
       break;
 
     default:

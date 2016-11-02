@@ -51,7 +51,7 @@ utils.isLoggedOut = (req, res, next) => {
 // ----------------------
 
 
-utils.sendEmployees = (req, res) => {
+utils.getEmployees = (req, res) => {
   Employee.find({}).exec()
     .then(employees => res.send({status: notificationCodes.success, employees}))
     .catch(error => {
@@ -314,6 +314,40 @@ utils.attachEmployee = (req, res, seatID, employeeID) => {
           res.send({ status: notificationCodes.success });
         })
         .catch(error => { throw error; });
+    })
+    .catch(error => {
+      error.status = notificationCodes.serverError;
+      res.send(error);
+      throw error;
+    });
+};
+
+
+utils.removeSeat = (req, res, seatID) => {
+  if (!seatID) {
+    res.send({ status: notificationCodes.idRequired });
+    return;
+  }
+  Seat.remove({id: seatID}).exec()
+    .then(() => {
+      res.send({ status: notificationCodes.success });
+    })
+    .catch(error => {
+      error.status = notificationCodes.serverError;
+      res.send(error);
+      throw error;
+    });
+};
+
+
+utils.getSeatByEmployee = (req, res, employeeID) => {
+  if (!employeeID) {
+    res.send({ status: notificationCodes.idRequired });
+    return;
+  }
+  Seat.find({employeeID}).exec()
+    .then(seats => {
+      res.send({ status: notificationCodes.success, seat: seats[0] });
     })
     .catch(error => {
       error.status = notificationCodes.serverError;

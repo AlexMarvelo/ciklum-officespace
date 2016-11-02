@@ -389,11 +389,12 @@ angular.
             msg: questionText
           })
           .then(() => {
-            this.mapcanvas.removeSeat(this.seat);
-            $scope.$apply(() => {
-              Floor(floorID).removeSeat(this.seat);
-            });
-            this.modal.iziModal('close');
+            const seat = this.seat;
+            Floor(floorID).removeSeat(this.seat)
+              .then(() => {
+                this.mapcanvas.removeSeat(seat);
+                this.modal.iziModal('close');
+              }, () => {});
           }, () => {})
           .catch(error => $log.error(error));
         };
@@ -414,7 +415,6 @@ angular.
                   tooltipTitle: undefined
                 }));
               }, () => {});
-
           }, () => {})
           .catch(error => $log.error(error));
         };
@@ -638,19 +638,23 @@ angular.
                 this.mapcanvas.deactivateAllSeats();
               }
               this.modal.iziModal('close');
-            }, () => {});
+            }, () => {})
+            .catch(error => $log.error(error));
           });
         };
 
 
         this.loadEmployeeSeatID = () => {
-          this.employee.seat = Floor(floorID).getSeatByEmployee(this.employee);
-          if (this.employee.seat && this.employee.seat.floorID != floorID) {
-            this.pasteEmployeeAnotherSeatBlock();
-            return;
-          }
-          this.pasteEmployeeSeatBlock();
-          this.mapcanvas.activateOneSeat(this.employee.seat);
+          Floor(floorID).getSeatByEmployee(this.employee)
+            .then(seat => {
+              this.employee.seat = seat;
+              if (this.employee.seat && this.employee.seat.floorID != floorID) {
+                this.pasteEmployeeAnotherSeatBlock();
+                return;
+              }
+              this.pasteEmployeeSeatBlock();
+              this.mapcanvas.activateOneSeat(this.employee.seat);
+            }, () => {});
         };
 
 

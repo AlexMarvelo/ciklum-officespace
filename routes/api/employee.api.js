@@ -13,7 +13,7 @@ module.exports = (router) => {
     switch (req.params.action) {
 
     case 'get':
-      utils.sendEmployees(req, res);
+      utils.getEmployees(req, res);
       break;
 
     default:
