@@ -21,14 +21,16 @@ angular.
 
     template: `
       <search></search>
+
+      <div ng-if="!$ctrl.config" class="contanier">
+        <p class="text-center"><br><br><br>Loading data...</p>
+      </div>
+
       <mapcanvas></mapcanvas>
 
-      <div class="container">
-        <p ng-if="!$ctrl.config" class="text-center"><br><br><br>Loading data...</p>
-        <div ng-if="$ctrl.config">
-          <div class="page-header">
-            <h1>{{$ctrl.config.title || $ctrl.config.id}}</h1>
-          </div>
+      <div ng-if="$ctrl.config" class="container">
+        <div class="page-header">
+          <h1>{{$ctrl.config.title || $ctrl.config.id}}</h1>
         </div>
       </div>
     `,

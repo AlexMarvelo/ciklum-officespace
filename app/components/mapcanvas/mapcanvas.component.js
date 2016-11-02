@@ -8,10 +8,6 @@ angular.
     controller: ['$scope', '$log', '$stateParams', '$timeout', 'Notifications', 'User', 'Floor', 'Employees',
       function MapCanvasCtrl($scope, $log, $stateParams, $timeout, Notifications, User, Floor, Employees) {
         const floorID = $stateParams.floorID;
-        const floorMapConfig = Floor(floorID).getConfig();
-        this.mapSource = floorMapConfig.mapSource;
-        this.mapWidth = floorMapConfig.width;
-
         this.mapcanvas = new Mapcanvas($scope, $log, floorID, {
           Notifications,
           User,
@@ -20,19 +16,26 @@ angular.
         });
 
         this.$onInit = () => {
-          if (!SVG.supported) {
-            Notifications.add(Notifications.codes.svgNotSupported);
-            $log.error('SVG not supported');
-            return;
-          }
-          const img = document.getElementById('mapcanvas-map');
-          img.addEventListener('load', () => {
-            this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
-            $scope.$apply(() => {
-              this.mapcanvas.ready = true;
-            });
-            this.mapcanvas.setSeats(Floor(floorID).getSeats());
-          });
+          Floor(floorID).getConfig()
+            .then(config => {
+              $scope.$apply(() => {
+                this.config = config;
+
+                if (!SVG.supported) {
+                  Notifications.add(Notifications.codes.svgNotSupported);
+                  $log.error('SVG not supported');
+                  return;
+                }
+                const img = document.getElementById('mapcanvas-map');
+                img.addEventListener('load', () => {
+                  this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
+                  $scope.$apply(() => {
+                    this.mapcanvas.ready = true;
+                  });
+                  this.mapcanvas.setSeats(Floor(floorID).getSeats());
+                });
+              });
+            }, () => {});
         };
       }
     ],
@@ -45,14 +48,14 @@ angular.
       <div class="container">
         <div class="row">
           <div class="col-lg-10 col-lg-push-1">
-            <div class="mapcanvas-container" id="mapcanvas-container" style="width: {{$ctrl.mapWidth ? $ctrl.mapWidth + 'px' : '100%'}}">
-              <img ng-src="{{$ctrl.mapSource}}" class="mapcanvas-map" id="mapcanvas-map" alt="Map loading failed">
+            <div class="mapcanvas-container" id="mapcanvas-container" style="width: {{$ctrl.config.mapWidth ? $ctrl.config.mapWidth + 'px' : '100%'}}">
+              <img ng-src="{{$ctrl.config.mapSource}}" class="mapcanvas-map" id="mapcanvas-map" alt="Map loading failed">
               <div class="mapcanvas" id="mapcanvas"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <modal mapcanvas="$ctrl.mapcanvas"></modal>
+      <modal ng-if="$ctrl.config" mapcanvas="$ctrl.mapcanvas"></modal>
     `,
   });

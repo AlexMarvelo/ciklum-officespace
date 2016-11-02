@@ -83,7 +83,7 @@ angular.
             <div class="page-header">
               <h1>Setup your floors</h1>
             </div>
-            <div ng-if="$ctrl.floors == undefined">
+            <div ng-if="!$ctrl.floors">
               <p class="text-center">Loading data...</p>
             </div>
             <table ng-if="$ctrl.floors" class="table table-striped admin-table">
