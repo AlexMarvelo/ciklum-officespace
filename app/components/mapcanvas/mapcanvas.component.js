@@ -34,15 +34,24 @@ angular.
               return;
             }
             const img = document.getElementById('mapcanvas-map');
-            img.addEventListener('load', () => {
-              this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
-              $scope.$apply(() => {
-                this.mapcanvas.ready = true;
+            if (img.complete) {
+              this.initMapcanvas(img);
+            } else {
+              img.addEventListener('load', () => {
+                $scope.$apply(() => {
+                  this.initMapcanvas(img);
+                });
               });
-              this.mapcanvas.setSeats(this.seats);
-            });
+            }
           }
         );
+
+
+        this.initMapcanvas = (img) => {
+          this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
+          this.mapcanvas.ready = true;
+          this.mapcanvas.setSeats(this.seats);
+        };
       }
     ],
 
