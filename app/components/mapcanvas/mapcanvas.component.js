@@ -16,16 +16,17 @@ angular.
         });
 
 
-        Floor(floorID).getSeats()
-          .then(seats => {
-            $scope.$apply(() => {
-              this.seats = seats;
-            });
-          }, () => {});
+        Floor(floorID).loadSeats();
 
 
         $scope.$watch(
-          () => this.config && this.seats,
+          Floor(floorID).getSeats,
+          seats => this.seats = seats
+        );
+
+
+        $scope.$watch(
+          () => this.config && this.seats && !this.initialized,
           ready => {
             if (!ready) return;
             if (!SVG.supported) {
@@ -34,15 +35,11 @@ angular.
               return;
             }
             const img = document.getElementById('mapcanvas-map');
-            if (img.complete) {
-              this.initMapcanvas(img);
-            } else {
-              img.addEventListener('load', () => {
-                $scope.$apply(() => {
-                  this.initMapcanvas(img);
-                });
+            img.addEventListener('load', () => {
+              $scope.$apply(() => {
+                this.initMapcanvas(img);
               });
-            }
+            });
           }
         );
 
@@ -51,6 +48,7 @@ angular.
           this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
           this.mapcanvas.ready = true;
           this.mapcanvas.setSeats(this.seats);
+          this.initialized = true;
         };
       }
     ],
@@ -71,6 +69,6 @@ angular.
           </div>
         </div>
       </div>
+      <modal mapcanvas="$ctrl.mapcanvas" seats="$ctrl.seats"></modal>
     `,
-    //<modal mapcanvas="$ctrl.mapcanvas"></modal>
   });

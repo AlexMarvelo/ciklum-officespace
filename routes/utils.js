@@ -181,6 +181,15 @@ utils.removeFloor = (req, res, floorID) => {
 // ---------------
 
 
+const unattachEmployeeFromOthers = (employeeID, exceptSeatID) => {
+  return Seat.update(
+    { $and: [{employeeID: employeeID}, {id: {$ne: exceptSeatID}}]},
+    { $unset: {employeeID: ''}}
+  ).exec()
+    .catch(error => { throw error; });
+};
+
+
 utils.getSeat = (req, res, seatID) => {
   if (!seatID) {
     res.send({ status: notificationCodes.idRequired });
@@ -205,11 +214,7 @@ utils.addSeat = (req, res, seat = {}) => {
       .then(() => {
         res.send({ status: notificationCodes.success });
       })
-      .catch(error => {
-        error.status = notificationCodes.serverError;
-        res.send(error);
-        throw error;
-      });
+      .catch(error => { throw error; });
   };
 
   if (!seat.id) {
@@ -222,6 +227,7 @@ utils.addSeat = (req, res, seat = {}) => {
         res.send({ status: notificationCodes.idUnique });
         return;
       }
+      unattachEmployeeFromOthers(seat.employeeID, seat.id);
       addSeat();
     })
     .catch(error => {
@@ -241,17 +247,9 @@ utils.updateSeat = (req, res, seatID, seat) => {
           .then(() => {
             res.send({ status: notificationCodes.success });
           })
-          .catch(error => {
-            error.status = notificationCodes.serverError;
-            res.send(error);
-            throw error;
-          });
+          .catch(error => { throw error; });
       })
-      .catch(error => {
-        error.status = notificationCodes.serverError;
-        res.send(error);
-        throw error;
-      });
+      .catch(error => { throw error; });
   };
 
   if (!seatID) {
@@ -265,11 +263,14 @@ utils.updateSeat = (req, res, seatID, seat) => {
   Seat.find({$and: [ {id: seat.id}, {id: {$ne: seatID}} ]})
     .then(seats => {
       if (seats.length) {
-        console.log(seats);
         res.send({ status: notificationCodes.idUnique });
         return;
       }
-      updateSeat();
+      unattachEmployeeFromOthers(seat.employeeID, seatID)
+        .then(() => {
+          updateSeat();
+        })
+        .catch(error => { throw error; });
     })
     .catch(error => {
       error.status = notificationCodes.serverError;
@@ -296,6 +297,30 @@ utils.getByFloor = (req, res, floorID) => {
 };
 
 
+utils.attachEmployee = (req, res, seatID, employeeID) => {
+  const attachEmployee = () => {
+    return Seat.update({id: seatID}, employeeID ? {$set: {employeeID}} : {$unset: {employeeID}} ).exec()
+      .catch(error => { throw error; });
+  };
+
+  if (!seatID) {
+    res.send({ status: notificationCodes.idRequired });
+    return;
+  }
+  unattachEmployeeFromOthers(employeeID, seatID)
+    .then(() => {
+      attachEmployee()
+        .then(() => {
+          res.send({ status: notificationCodes.success });
+        })
+        .catch(error => { throw error; });
+    })
+    .catch(error => {
+      error.status = notificationCodes.serverError;
+      res.send(error);
+      throw error;
+    });
+};
 
 
 module.exports = utils;

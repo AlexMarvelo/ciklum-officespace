@@ -11,6 +11,8 @@ angular.
       const defaultWidth = 945;
 
 
+
+
       // -----------
       // floor utils
       // -----------
@@ -71,6 +73,13 @@ angular.
               action: 'update'
             }
           },
+          attachEmployee: {
+            method: 'POST',
+            params: {
+              seatID: seatID,
+              action: 'acttachemployee'
+            }
+          },
           getByFloor: {
             method: 'GET',
             params: {
@@ -79,6 +88,8 @@ angular.
           },
         });
       };
+
+
 
 
 
@@ -127,6 +138,20 @@ angular.
       };
 
 
+      this.getSeats = () => {
+        const floorID = this.floorID;
+        try {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+
+          return this.floors[floorID] ? this.floors[floorID].seats : undefined;
+        } catch (error) {
+          Notifications.add(error);
+        }
+      };
+
+
       this.addSeat = (seat) => {
         const floorID = this.floorID;
         return new Promise((resolve) => {
@@ -157,7 +182,7 @@ angular.
       };
 
 
-      this.getSeats = () => {
+      this.loadSeats = () => {
         const floorID = this.floorID;
         return new Promise((resolve) => {
           if (!floorID) {
@@ -182,7 +207,7 @@ angular.
       };
 
 
-      this.updateSeatCoords = (seat) => {
+      this.updateSeatCoords = (seat = {}) => {
         const floorID = this.floorID;
         return new Promise((resolve) => {
           if (!floorID) {
@@ -221,61 +246,114 @@ angular.
       };
 
 
-
-
-
-
-      // this.get = () => {
-      //   const floorID = this.floorID;
-      //   if (!floorID) {
-      //     Notifications.add(Notifications.codes.floorIDRequired);
-      //     return;
-      //   }
-      //   return this.floors[floorID] || initFloorState;
-      // };
-
-
-
-      this.updateSeat = (seatID, newSeat = {}) => {
+      this.updateSeat = (seatID, updatedSeat = {}) => {
         const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (newSeat.id == undefined) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        let seat = this.floors[floorID].seats.find(s => s.id == seatID);
-        if (!seat) {
-          Notifications.add(Notifications.codes.seatNotFound);
-          return;
-        }
-        let seatIndex = this.floors[floorID].seats.indexOf(seat);
-        if (newSeat.employeeID && seat.employeeID != newSeat.employeeID) {
-          this.unattachEmployeeFromAllSeats({id: newSeat.employeeID});
-        }
-        this.floors[floorID].seats.splice(seatIndex, 1, newSeat);
-        // localStorageService.set('floors', this.floors);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- update seat ${seatID} on ${floorID}`);
-      };
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!updatedSeat.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
+          let targerSeat = this.floors[floorID].seats.find(s => s.id == seatID);
+          if (!targerSeat) {
+            throw { status: Notifications.codes.seatNotFound };
+          }
 
-
-      this.unattachEmployeeFromAllSeats = (employee) => {
-        if (!employee.id) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        for (let floorID in this.floors) {
-          this.floors[floorID].seats.forEach(seat => {
-            if (seat.employeeID == employee.id) {
-              seat.employeeID = undefined;
-              $log.debug(`- unattach ${employee.id} from ${seat.id} seat on ${floorID} floor`);
+          this.seatServerRequest(seatID).updateSeat({seat: updatedSeat}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
             }
+            if (updatedSeat.employeeID && updatedSeat.employeeID != targerSeat.employeeID) {
+              this.unattachEmployeeFromAllSeats({id: updatedSeat.employeeID});
+            }
+            this.floors[floorID].seats = this.floors[floorID].seats.map(s => {
+              if (s.id == seatID) return updatedSeat;
+              return s;
+            });
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- update seat ${seatID} on ${floorID}`);
+            resolve();
           });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+      this.unattachEmployeeFromAllSeats = (employee = {}) => {
+        try {
+          if (!employee.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
+          for (let fID in this.floors) {
+            this.floors[fID].seats.forEach(seat => {
+              if (seat.employeeID == employee.id) {
+                seat.employeeID = undefined;
+                $log.debug(`- unattach ${employee.id} from ${seat.id} seat on ${fID} floor`);
+              }
+            });
+          }
+        } catch (error) {
+          Notifications.add(error.status);
         }
       };
+
+
+      this.attachEmployeeToSeat = (seatID, employeeID) => {
+        const floorID = this.floorID;
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!seatID) {
+            throw { status: Notifications.codes.idRequired };
+          }
+          let targetSeat = this.floors[floorID].seats.find(s => s.id == seatID);
+          if (!targetSeat) {
+            throw { status: Notifications.codes.seatNotFound };
+          }
+
+          this.seatServerRequest(seatID).attachEmployee({employeeID}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            this.floors[targetSeat.floorID].seats = this.floors[targetSeat.floorID].seats.map(seat => {
+              if (seat.id == targetSeat.id) {
+                seat.employeeID = employeeID;
+              }
+              return seat;
+            });
+            Notifications.add(Notifications.codes.success);
+            $log.debug(employeeID ?
+              `- attach ${employeeID} employee to ${seatID} seat on ${floorID} floor` :
+              `- unattach employee from ${seatID} seat on ${floorID} floor`
+            );
+            resolve();
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+
+
+
+
+
+
+
+
+
 
 
       this.removeSeat = (seat = {}) => {
@@ -290,23 +368,8 @@ angular.
         }
         if (this.activeSeat.id == seat.id) this.setActiveSeat(undefined);
         this.floors[floorID].seats = this.floors[floorID].seats.filter(s => s.id != seat.id);
-        // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- remove seat ${seat.id} from floor ${floorID}`);
-      };
-
-
-      this.cleanSeats = () => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (!this.floors[floorID]) return;
-        this.floors[floorID].seats = [];
-        // localStorageService.set('floors', this.floors);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- clean all seats om ${floorID} floor`);
       };
 
 
@@ -322,28 +385,7 @@ angular.
       };
 
 
-      this.attachEmployeeToSeat = (seatID, employeeID) => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        let seat = this.floors[floorID].seats.find(s => s.id == seatID);
-        if (!seat) {
-          Notifications.add(Notifications.codes.seatNotFound);
-          return;
-        }
-        if (employeeID) {
-          this.unattachEmployeeFromAllSeats({id: employeeID});
-        }
-        seat.employeeID = employeeID;
-        // localStorageService.set('floors', this.floors);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(employeeID ?
-          `- attach ${employeeID} employee to ${seatID} seat` :
-          `- unattach employee from ${seatID} seat`
-        );
-      };
+
 
 
 
@@ -469,17 +511,14 @@ angular.
       return (floorID) => {
         this.floorID = floorID;
         return {
-          serverRequest: this.serverRequest,
-
-          get: this.get,
           getSeats: this.getSeats,
+          loadSeats: this.loadSeats,
           getSeatByEmployee: this.getSeatByEmployee,
           attachEmployeeToSeat: this.attachEmployeeToSeat,
           addSeat: this.addSeat,
           removeSeat: this.removeSeat,
           updateSeat: this.updateSeat,
           updateSeatCoords: this.updateSeatCoords,
-          cleanSeats: this.cleanSeats,
           getActiveSeat: this.getActiveSeat,
           setActiveSeat: this.setActiveSeat,
 

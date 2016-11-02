@@ -25,6 +25,10 @@ module.exports = (router) => {
       utils.updateSeat(req, res, req.params.seatID, req.body.seat);
       break;
 
+    case 'acttachemployee':
+      utils.attachEmployee(req, res, req.params.seatID, req.body.employeeID);
+      break;
+
     case 'getbyfloor':
       utils.getByFloor(req, res, req.query.floorID);
       break;

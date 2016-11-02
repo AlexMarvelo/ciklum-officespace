@@ -125,12 +125,6 @@ angular.
           }
         );
 
-        $scope.$watch(
-          Floor(floorID).getSeats,
-          seats => {
-            this.seats = seats;
-          }
-        );
 
         $scope.$watch(
           () => this.authorized != undefined &&
@@ -375,14 +369,14 @@ angular.
             msg: `Are you sure to update ${this.seat.title || this.seat.id} seat with new values?`
           })
           .then(() => {
-            if (newEmployee) this.mapcanvas.unattachEmployeeFromSeat(newEmployee);
-            this.mapcanvas.updateSeat(this.seat.id, Object.assign({}, newSeat, {
-              tooltipTitle: newEmployee ? `${newEmployee.firstName} ${newEmployee.lastName}` : undefined
-            }));
-            $scope.$apply(() => {
-              Floor(floorID).updateSeat(this.seat.id, newSeat);
-            });
-            this.modal.iziModal('close');
+            Floor(floorID).updateSeat(this.seat.id, newSeat)
+              .then(() => {
+                if (newEmployee) this.mapcanvas.unattachEmployeeFromSeat(newEmployee);
+                this.mapcanvas.updateSeat(this.seat.id, Object.assign({}, newSeat, {
+                  tooltipTitle: newEmployee ? `${newEmployee.firstName} ${newEmployee.lastName}` : undefined
+                }));
+                this.modal.iziModal('close');
+              }, () => {});
           }, () => {})
           .catch(error => $log.error(error));
         };
@@ -412,14 +406,15 @@ angular.
             msg: questionText
           })
           .then(() => {
-            this.clearEmployeeList();
-            this.seat.employeeID = undefined;
-            this.mapcanvas.updateSeat(this.seat.id, Object.assign({}, this.seat, {
-              tooltipTitle: undefined
-            }));
-            $scope.$apply(() => {
-              Floor(floorID).attachEmployeeToSeat(this.seat.id, undefined);
-            });
+            Floor(floorID).attachEmployeeToSeat(this.seat.id, undefined)
+              .then(() => {
+                this.clearEmployeeList();
+                this.seat.employeeID = undefined;
+                this.mapcanvas.updateSeat(this.seat.id, Object.assign({}, this.seat, {
+                  tooltipTitle: undefined
+                }));
+              }, () => {});
+
           }, () => {})
           .catch(error => $log.error(error));
         };
@@ -852,6 +847,7 @@ angular.
 
     bindings: {
       mapcanvas: '<',
+      seats: '<',
     },
 
     template: `
