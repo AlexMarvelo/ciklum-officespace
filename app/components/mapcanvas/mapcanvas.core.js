@@ -86,7 +86,10 @@ class Mapcanvas {
     this.draw.click(event => {
       event.preventDefault();
       const emptyPlaceClicked = event.target.id == this.draw.node.id;
-      if (emptyPlaceClicked && this.User.authorized() && this.userMode == 'draw') this.addSeat({x: event.offsetX, y: event.offsetY});
+      if (emptyPlaceClicked && this.User.authorized() && this.userMode == 'draw') {
+        this.addSeat({x: event.offsetX, y: event.offsetY});
+        return;
+      }
     });
   }
 

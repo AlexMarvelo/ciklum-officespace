@@ -13,7 +13,7 @@ angular.
 
 
         this.getFloors = () => {
-          Floor('nomatter').getAllConfigs()
+          Floor().getAllConfigs()
             .then(floors => {
               $scope.$apply(() => {
                 this.floorsCache = floors.map(floor => Object.assign({}, floor));

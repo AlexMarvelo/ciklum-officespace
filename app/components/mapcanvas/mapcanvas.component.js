@@ -15,33 +15,40 @@ angular.
           Employees,
         });
 
-        this.$onInit = () => {
-          Floor(floorID).getConfig()
-            .then(config => {
-              $scope.$apply(() => {
-                this.config = config;
 
-                if (!SVG.supported) {
-                  Notifications.add(Notifications.codes.svgNotSupported);
-                  $log.error('SVG not supported');
-                  return;
-                }
-                const img = document.getElementById('mapcanvas-map');
-                img.addEventListener('load', () => {
-                  this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
-                  $scope.$apply(() => {
-                    this.mapcanvas.ready = true;
-                  });
-                  this.mapcanvas.setSeats(Floor(floorID).getSeats());
-                });
+        Floor(floorID).getSeats()
+          .then(seats => {
+            $scope.$apply(() => {
+              this.seats = seats;
+            });
+          }, () => {});
+
+
+        $scope.$watch(
+          () => this.config && this.seats,
+          ready => {
+            if (!ready) return;
+            if (!SVG.supported) {
+              Notifications.add(Notifications.codes.svgNotSupported);
+              $log.error('SVG not supported');
+              return;
+            }
+            const img = document.getElementById('mapcanvas-map');
+            img.addEventListener('load', () => {
+              this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
+              $scope.$apply(() => {
+                this.mapcanvas.ready = true;
               });
-            }, () => {});
-        };
+              this.mapcanvas.setSeats(this.seats);
+            });
+          }
+        );
       }
     ],
 
     bindings: {
       mapcanvas: '<',
+      config: '<',
     },
 
     template: `
@@ -55,7 +62,6 @@ angular.
           </div>
         </div>
       </div>
-
-      <modal ng-if="$ctrl.config" mapcanvas="$ctrl.mapcanvas"></modal>
     `,
+    //<modal mapcanvas="$ctrl.mapcanvas"></modal>
   });

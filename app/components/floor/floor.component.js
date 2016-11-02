@@ -17,7 +17,9 @@ angular.
       }
     ],
 
-
+    bindings: {
+      config: '<',
+    },
 
     template: `
       <search></search>
@@ -26,7 +28,7 @@ angular.
         <p class="text-center"><br><br><br>Loading data...</p>
       </div>
 
-      <mapcanvas></mapcanvas>
+      <mapcanvas config="$ctrl.config"></mapcanvas>
 
       <div ng-if="$ctrl.config" class="container">
         <div class="page-header">

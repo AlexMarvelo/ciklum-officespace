@@ -16,9 +16,9 @@ angular.
       // -----------
 
 
-      this.serverRequest = () => {
+      this.floorServerRequest = () => {
         const floorID = this.floorID;
-        return $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/floor/:floorID/:action`, {action: 'getConfig'}, {
+        return $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/floor/:floorID/:action`, {floorID: 'nomatter', action: 'getConfig'}, {
           getConfig: {
             method: 'GET',
             params: {
@@ -36,7 +36,6 @@ angular.
           getAllConfigs: {
             method: 'GET',
             params: {
-              floorID: floorID,
               action: 'getallconfigs'
             }
           },
@@ -51,43 +50,190 @@ angular.
       };
 
 
-      this.get = () => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        return this.floors[floorID] || initFloorState;
+      this.seatServerRequest = (seatID) => {
+        return $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/seat/:seatID/:action`, {seatID: 'nomatter', action: 'getSeat'}, {
+          getSeat: {
+            method: 'GET',
+            params: {
+              action: 'get'
+            }
+          },
+          addSeat: {
+            method: 'POST',
+            params: {
+              action: 'add'
+            }
+          },
+          updateSeat: {
+            method: 'POST',
+            params: {
+              seatID: seatID,
+              action: 'update'
+            }
+          },
+          getByFloor: {
+            method: 'GET',
+            params: {
+              action: 'getbyfloor'
+            }
+          },
+        });
       };
 
 
-      this.getSeats = () => {
+
+
+      // ---------------
+      // Seats interface
+      // ---------------
+
+
+      this.getActiveSeat = () => {
         const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
+        try {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          return this.activeSeat;
+        } catch (error) {
+          Notifications.add(error);
         }
-        if (!this.floors[floorID]) this.floors[floorID] = initFloorState;
-        return this.floors[floorID].seats;
+      };
+
+
+      this.setActiveSeat = (activeSeat) => {
+        const floorID = this.floorID;
+        try {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!activeSeat) {
+            if (this.activeSeat) $log.debug(`- unset active seat on ${floorID} floor`);
+            this.activeSeat = undefined;
+            return;
+          }
+          if (activeSeat.id == undefined) {
+            throw { status: Notifications.codes.idRequired };
+          }
+          const targetSeat = this.floors[floorID].seats.find(seat => seat.id == activeSeat.id);
+          if (!targetSeat) {
+            throw { status: Notifications.codes.seatNotFound };
+          }
+          this.activeSeat = targetSeat;
+          $log.debug(`- set active seat to ${this.activeSeat.id} on ${floorID} floor`);
+        } catch (error) {
+          Notifications.add(error);
+        }
       };
 
 
       this.addSeat = (seat) => {
         const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (seat.id == undefined) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        if (!this.floors[floorID]) this.floors[floorID] = Object.assign({}, initFloorState);
-        this.floors[floorID].seats.push(seat);
-        // localStorageService.set('floors', this.floors);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- add seat to ${floorID} floor with id: ${seat.id}`);
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!seat.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
+
+          if (!this.floors[floorID]) this.floors[floorID] = Object.assign({}, initFloorState);
+          this.seatServerRequest().addSeat({seatID: seat.id, seat}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            this.floors[floorID].seats.push(seat);
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- add seat to ${floorID} floor with id: ${seat.id}`);
+            resolve();
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
       };
+
+
+      this.getSeats = () => {
+        const floorID = this.floorID;
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+
+          if (!this.floors[floorID]) this.floors[floorID] = initFloorState;
+          this.seatServerRequest().getByFloor({floorID}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            this.floors[floorID].seats = response.seats;
+            resolve(response.seats);
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+      this.updateSeatCoords = (seat) => {
+        const floorID = this.floorID;
+        return new Promise((resolve) => {
+          if (!floorID) {
+            throw { status: Notifications.codes.floorIDRequired };
+          }
+          if (!seat.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
+          let targetSeat = this.floors[floorID].seats.find(s => s.id == seat.id);
+          if (!targetSeat) {
+            throw { status: Notifications.codes.seatNotFound };
+          }
+
+          let updatedSeat = Object.assign({}, targetSeat);
+          updatedSeat.x = seat.x;
+          updatedSeat.y = seat.y;
+          this.seatServerRequest(seat.id).updateSeat({seat: updatedSeat}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            this.floors[floorID].seats = this.floors[floorID].seats.map(s => {
+              if (s.id == seat.id) return updatedSeat;
+              return s;
+            });
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- update coords of seat ${seat.id} on ${floorID}`);
+            resolve();
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+
+
+
+
+      // this.get = () => {
+      //   const floorID = this.floorID;
+      //   if (!floorID) {
+      //     Notifications.add(Notifications.codes.floorIDRequired);
+      //     return;
+      //   }
+      //   return this.floors[floorID] || initFloorState;
+      // };
+
 
 
       this.updateSeat = (seatID, newSeat = {}) => {
@@ -113,29 +259,6 @@ angular.
         // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- update seat ${seatID} on ${floorID}`);
-      };
-
-
-      this.updateSeatCoords = (seat) => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (seat.id == undefined) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        let targetSeat = this.floors[floorID].seats.find(s => s.id == seat.id);
-        if (!targetSeat) {
-          Notifications.add(Notifications.codes.seatNotFound);
-          return;
-        }
-        targetSeat.x = seat.x;
-        targetSeat.y = seat.y;
-        // localStorageService.set('floors', this.floors);
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- update coords of seat ${seat.id} on ${floorID}`);
       };
 
 
@@ -184,41 +307,6 @@ angular.
         // localStorageService.set('floors', this.floors);
         Notifications.add(Notifications.codes.success);
         $log.debug(`- clean all seats om ${floorID} floor`);
-      };
-
-
-      this.getActiveSeat = () => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        return this.activeSeat;
-      };
-
-
-      this.setActiveSeat = (activeSeat) => {
-        const floorID = this.floorID;
-        if (!floorID) {
-          Notifications.add(Notifications.codes.floorIDRequired);
-          return;
-        }
-        if (!activeSeat) {
-          if (this.activeSeat) $log.debug(`- unset active seat on ${floorID} floor`);
-          this.activeSeat = undefined;
-          return;
-        }
-        if (activeSeat.id == undefined) {
-          Notifications.add(Notifications.codes.idRequired);
-          return;
-        }
-        const targetSeat = this.floors[floorID].seats.find(seat => seat.id == activeSeat.id);
-        if (!targetSeat) {
-          Notifications.add(Notifications.codes.seatNotFound);
-          return;
-        }
-        this.activeSeat = targetSeat;
-        $log.debug(`- set active seat to ${this.activeSeat.id} on ${floorID} floor`);
       };
 
 
@@ -272,10 +360,14 @@ angular.
             throw { status: Notifications.codes.floorIDRequired };
           }
 
-          this.serverRequest().getConfig(response => {
+          this.floorServerRequest().getConfig(response => {
             if (response.status != Notifications.codes.success) {
-              throw response;
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
             }
+            this.floors[floorID] = this.floors[floorID] || Object.assign({}, initFloorState);
+            this.floors[floorID].config = response.config;
             resolve(response.config);
           });
         })
@@ -308,10 +400,11 @@ angular.
           floor.config.mapSource = config.mapSource;
           floor.config.width = config.width || defaultWidth;
 
-          this.serverRequest().setConfig({config: floor.config}).$promise
+          this.floorServerRequest().setConfig({config: floor.config}).$promise
             .then(response => {
               if (response.status != Notifications.codes.success) {
                 Notifications.add(response.status);
+                if (CONFIG.consoleErrors) $log.error(response);
                 return;
               }
               this.floors[config.id] = floor;
@@ -329,9 +422,10 @@ angular.
 
       this.getAllConfigs = () => {
         return new Promise((resolve) => {
-          this.serverRequest().getAllConfigs(response => {
+          this.floorServerRequest().getAllConfigs(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
               return;
             }
             resolve(response.configs);
@@ -351,11 +445,13 @@ angular.
             throw { status: Notifications.codes.idRequired };
           }
 
-          this.serverRequest().removeFloor(response => {
+          this.floorServerRequest().removeFloor(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
               return;
             }
+            delete this.floors[floorID];
             Notifications.add(Notifications.codes.success);
             $log.debug(`- remove ${floorID} floor`);
             resolve(response);

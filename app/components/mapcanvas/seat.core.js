@@ -33,17 +33,6 @@ class Seat {
 
     this.setTooltip(tooltipTitle);
 
-    this.svg.click(() => {
-      if (this.active) return;
-      this.mapcanvas.$scope.$apply(() => {
-        this.mapcanvas.$scope.activeSeat = {
-          id: this.id,
-          x: this.x,
-          y: this.y,
-        };
-      });
-    });
-
     this.group.on('dragstart.seat', event => {
       this.oldX = event.detail.p.x;
       this.oldY = event.detail.p.y;
@@ -58,7 +47,19 @@ class Seat {
       this.y = this.y + newY - this.oldY;
       this.status = undefined;
       this.showTooltip();
+      this.active = true;
+      this.mapcanvas.$scope.$apply(() => {
+        this.mapcanvas.$scope.activeSeat = {
+          id: this.id,
+          x: this.x,
+          y: this.y,
+        };
+      });
+    });
+
+    this.svg.click(() => {
       if (this.active) return;
+      this.active = true;
       this.mapcanvas.$scope.$apply(() => {
         this.mapcanvas.$scope.activeSeat = {
           id: this.id,

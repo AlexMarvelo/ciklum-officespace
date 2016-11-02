@@ -5,7 +5,7 @@ angular.
   component('homepage', {
     controller: ['$scope', 'Floor',
       function HomepageCtrl($scope, Floor) {
-        Floor('nomatter').getAllConfigs()
+        Floor().getAllConfigs()
           .then(floors => {
             $scope.$apply(() => {
               this.floors = floors

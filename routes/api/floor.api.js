@@ -29,7 +29,6 @@ module.exports = (router) => {
       break;
 
     default:
-      console.log('redirect');
       res.redirect('/');
       throw new Error('Wrong request path');
     }
