@@ -4,7 +4,7 @@ const utils = {};
 const Employee = require('../models/employee');
 const Floor = require('../models/floor');
 const Seat = require('../models/seat');
-const notificationCodes = require('../app/config/notifications.json');
+const notificationCodes = require('../share/config/notifications.json');
 
 
 

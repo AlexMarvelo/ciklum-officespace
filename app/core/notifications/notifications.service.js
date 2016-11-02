@@ -1,6 +1,6 @@
 'use strict';
 
-const notificationCodes = require('../../config/notifications.json');
+const notificationCodes = require('../../../share/config/notifications.json');
 
 angular.
   module('core.notifications').
