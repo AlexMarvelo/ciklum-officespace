@@ -23,6 +23,8 @@ class Mapcanvas {
     this.$scope.$watch(
       'activeSeat',
       (activeSeat = {}) => {
+        console.log('- new active seat:');
+        console.log(activeSeat);
         this.seats.forEach(seat => {
           if (seat.id == activeSeat.id) {
             seat.x = activeSeat.x;
