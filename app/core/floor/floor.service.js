@@ -152,9 +152,9 @@ angular.
           if (!targetSeat) {
             throw { status: Notifications.codes.seatNotFound };
           }
-          console.log('- received active seat:');
-          console.log(activeSeat);
           this.activeSeat = targetSeat;
+          console.log('- new active seat:');
+          console.log(this.activeSeat);
           $log.debug(`- set active seat to ${this.activeSeat.id} on ${floorID} floor`);
         } catch (error) {
           Notifications.add(error);
