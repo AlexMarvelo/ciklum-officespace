@@ -71,9 +71,9 @@ angular
       }])
 
     .constant('CONFIG', {
-      'env': 'production',
+      'env': 'local',
       'consoleErrors': true,
-      'appDomain_local': 'http://localhost:3000',
+      'appDomain_local': 'http://localhost:5000',
       'appDomain_remote': 'http://ciklumspace.herokuapp.com',
       'appName': 'Ciklum OfficeSpace'
     });
