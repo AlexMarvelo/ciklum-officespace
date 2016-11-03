@@ -44,13 +44,15 @@ angular.
 
       const update = () => {
         serverRequest.get(user => {
-          if (user.local == undefined) {
+          if (!user.local) {
             this.user = undefined;
-            return;
+            $log.debug('- non-authorized user');
+            localStorageService.set('user', this.user);
+          } else {
+            this.user = user;
+            $log.debug(`- Authorization init. User: ${this.user.local.email}`);
+            localStorageService.set('user', this.user);
           }
-          this.user = user;
-          $log.debug(`- Authorization init. User: ${this.user.local.email}`);
-          localStorageService.set('user', this.user);
         });
       };
 
