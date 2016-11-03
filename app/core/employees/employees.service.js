@@ -4,10 +4,7 @@ angular.
   module('core.employees').
   factory('Employees', ['$log', '$resource', 'Notifications', 'CONFIG',
     function($log, $resource, Notifications, CONFIG) {
-      this.employees = [];
-
-
-      this.serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/employee/:action`, {action: 'get'}, {
+      const serverRequest = $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/employee/:action`, {action: 'get'}, {
         get: {
           method: 'GET',
           params: {
@@ -17,16 +14,25 @@ angular.
       });
 
 
-      this.serverRequest.get(response => {
-        if (response.status != Notifications.codes.success) {
-          Notifications.add(response.status);
-          if (CONFIG.consoleErrors) $log.error(response);
-          return;
-        }
-        this.employees = response.employees || [];
-        Notifications.add(Notifications.codes.success);
-        $log.debug(`- employees fetched. amount: ${this.employees.length}`);
-      });
+      this.load = () => {
+        return new Promise((resolve) => {
+          serverRequest.get(response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            this.employees = response.employees || [];
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- employees fetched. amount: ${this.employees.length}`);
+            resolve(this.employees);
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
 
 
       this.get = () => this.employees;
@@ -62,7 +68,7 @@ angular.
 
       return {
         get: this.get,
-        serverRequest: this.serverRequest,
+        load: this.load,
         getActiveEmployee: this.getActiveEmployee,
         setActiveEmployee: this.setActiveEmployee,
       };
