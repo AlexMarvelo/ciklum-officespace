@@ -19,6 +19,7 @@ angular.
           adminBtn: {
             link: '/admin',
             state: 'admin',
+            title: 'Admin panel',
           },
           signupBtn: {
             link: '/signup',
@@ -46,6 +47,14 @@ angular.
           this.user = User.get();
         });
 
+        $scope.$watch(
+          User.getMode,
+          mode => {
+            this.mode = mode;
+          }
+        );
+
+
         this.logout = (event) => {
           event.preventDefault();
           User.serverRequest.logout(() => {
@@ -55,16 +64,20 @@ angular.
           });
         };
 
-        this.drawMode = false;
+
         this.toggleDrawMode = (event) => {
           event.preventDefault();
-          if (this.drawMode) {
-            this.drawMode = false;
+          if (this.mode == 'draw') {
             User.setMode(undefined);
           } else {
-            this.drawMode = true;
             User.setMode('draw');
           }
+        };
+
+
+        this.unsetSelectionMode = (event) => {
+          event.preventDefault();
+          User.setMode(undefined);
         };
       }
     ],
@@ -88,11 +101,12 @@ angular.
           </div>
           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
-              <li ng-if="$ctrl.logined == true">  <a ui-sref="{{$ctrl.static.adminBtn.state}}">Hello, {{$ctrl.user.local.email}}</a></li>
-              <li ng-if="$ctrl.logined == true && $ctrl.currentState.name == 'floor'">  <a href="#" ng-click="$ctrl.toggleDrawMode($event)" class="{{$ctrl.drawMode ? 'active' : ''}}">{{$ctrl.drawMode ? 'Exit drawing' : 'New seat'}}</a></li>
+              <li ng-if="$ctrl.logined == true">  <a ui-sref="{{$ctrl.static.adminBtn.state}}">{{$ctrl.static.adminBtn.title}}</a></li>
+              <li ng-if="$ctrl.logined == true && $ctrl.currentState.name == 'floor' && ($ctrl.mode == 'draw' || $ctrl.mode == undefined)">  <a href="#" ng-click="$ctrl.toggleDrawMode($event)" class="{{$ctrl.mode == 'draw' ? 'active' : ''}}">{{$ctrl.mode == 'draw' ? 'Exit drawing' : 'New seat'}}</a></li>
+              <li ng-if="$ctrl.logined == true && $ctrl.currentState.name == 'floor' && $ctrl.mode == 'selection'">  <a href="#" ng-click="$ctrl.unsetSelectionMode($event)" class="active">Exit selection mode</a></li>
               <li ng-if="$ctrl.logined == true">  <a href="#" ng-click="$ctrl.logout($event)">{{$ctrl.static.logoutBtn.title}}</a></li>
-              <li ng-if="$ctrl.logined == false"> <a ui-sref="{{$ctrl.static.loginBtn.state}}">{{$ctrl.static.loginBtn.title}}</a></li>
-              <li ng-if="$ctrl.logined == false"> <a ui-sref="{{$ctrl.static.signupBtn.state}}">{{$ctrl.static.signupBtn.title}}</a></li>
+              <li ng-if="$ctrl.logined == false">  <a ui-sref="{{$ctrl.static.loginBtn.state}}">{{$ctrl.static.loginBtn.title}}</a></li>
+              <li ng-if="$ctrl.logined == false">  <a ui-sref="{{$ctrl.static.signupBtn.state}}">{{$ctrl.static.signupBtn.title}}</a></li>
             </ul>
           </div>
         </div>

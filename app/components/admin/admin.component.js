@@ -5,39 +5,68 @@ const confirm = require('../confirm/confirm.core');
 angular.
   module('admin').
   component('admin', {
-    controller: ['$scope', 'Floor',
-      function AdminCtrl($scope, Floor) {
+    controller: ['$scope', 'Floor', 'Notifications',
+      function AdminCtrl($scope, Floor, Notifications) {
         this.$onInit = () => {
           this.getFloors();
         };
 
 
         this.getFloors = () => {
-          this.floors = Floor().getAllConfigs().map(floor => {
-            floor.oldID = floor.id;
-            return floor;
-          });
+          Floor().getAllConfigs()
+            .then(floors => {
+              $scope.$apply(() => {
+                this.floorsCache = floors.map(floor => Object.assign({}, floor));
+                this.floors = floors.slice(0).map(floor => {
+                  floor.oldID = floor.id;
+                  return floor;
+                });
+              });
+            }, () => {});
         };
 
 
         this.onFloorSaveClick = (event, floor) => {
           event.preventDefault();
+          if (this.floorsCache.find(f => f.id == floor.id && f.id != floor.oldID)) {
+            Notifications.add(Notifications.codes.idUnique);
+            return;
+          }
+          const newFloor = this.floorsCache.find(f => f.id == floor.oldID) == undefined;
           confirm({
-            msg: `Are you sure to update ${floor.oldID} floor config?`,
+            msg: `Are you sure to ${newFloor ? 'set' : 'update'} ${floor.oldID} floor config?`,
           })
           .then(() => {
-            Floor(floor.oldID).setConfig(floor);
-            $scope.$apply(() => {
-              this.getFloors();
-            });
+            if (newFloor) {
+              this.addConfig(floor);
+            } else {
+              this.updateConfig(floor);
+            }
           }, () => {});
         };
 
+        this.addConfig = (floor) => {
+          Floor().addConfig(floor)
+            .then(() => {
+              $scope.$apply(() => {
+                this.getFloors();
+              });
+            })
+            .catch(() => {
+              $scope.$apply(() => {});
+            });
+        };
 
-        this.onFloorCreateClick = (event) => {
-          event.preventDefault();
-          const now = (new Date()).toISOString();
-          this.floors.push({id: now, oldID: now, saved: false});
+        this.updateConfig = (floor) => {
+          Floor(floor.oldID).updateConfig(floor)
+            .then(() => {
+              $scope.$apply(() => {
+                this.getFloors();
+              });
+            })
+            .catch(() => {
+              $scope.$apply(() => {});
+            });
         };
 
 
@@ -47,11 +76,23 @@ angular.
             msg: `Are you sure to delete ${floor.oldID} floor?`,
           })
           .then(() => {
-            Floor(floor.oldID).removeFloor();
-            $scope.$apply(() => {
-              this.getFloors();
-            });
+            Floor(floor.oldID).removeFloor()
+              .then(() => {
+                $scope.$apply(() => {
+                  this.getFloors();
+                });
+              })
+              .catch(() => {
+                $scope.$apply(() => {});
+              });
           }, () => {});
+        };
+
+
+        this.onFloorCreateClick = (event) => {
+          event.preventDefault();
+          const now = (new Date()).toISOString();
+          this.floors.push({id: now, oldID: now, saved: false});
         };
       }
     ],
@@ -62,6 +103,9 @@ angular.
           <div class="col-sm-12">
             <div class="page-header">
               <h1>Setup your floors</h1>
+            </div>
+            <div ng-if="!$ctrl.floors">
+              <p class="text-center">Loading data...</p>
             </div>
             <table ng-if="$ctrl.floors" class="table table-striped admin-table">
               <thead>
@@ -78,17 +122,17 @@ angular.
                 <tr ng-repeat="floor in $ctrl.floors">
                   <td>
                     <div class="form-group">
-                      <input type="text" ng-model="floor.id" class="form-control" placeholder="no id">
+                      <input type="text" ng-model="floor.id" class="form-control" placeholder="id is required">
                     </div>
                   </th>
                   <td>
                     <div class="form-group">
-                      <input type="text" ng-model="floor.title" class="form-control" placeholder="no title">
+                      <input type="text" ng-model="floor.title" class="form-control" placeholder="untitled">
                     </div>
                   </th>
                   <td>
                     <div class="form-group">
-                      <input type="text" ng-model="floor.mapSrc" class="form-control" placeholder="no map">
+                      <input type="text" ng-model="floor.mapSource" class="form-control" placeholder="no map">
                     </div>
                   </th>
                   <td>

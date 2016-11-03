@@ -1,16 +1,17 @@
 .mapcanvas
   z-index: 1
   width: 100%
-  // height: 100%
+  position: absolute
+  top: 0
+  left: 0
+  &-frame
+    overflow: auto
   &-container
     margin: 40px auto
     position: relative
   &-map
     width: 100%
-    position: absolute
-    top: 0
-    left: 0
-    z-index: -1
+    position: relative
     user-select: none
     text-align: center
   &-canvas
@@ -21,6 +22,9 @@
     cursor: crosshair
     .seat-blockArea
       cursor: not-allowed
+  &-selection-mode
+    .seat
+      cursor: cell
 
 .seat
   cursor: pointer
@@ -29,3 +33,5 @@
   &:hover,
   &.seat--active
     opacity: 1
+  &-tooltip
+    cursor: default

@@ -1,28 +1,15 @@
 'use strict';
 
+const notificationCodes = require('../../../share/config/notifications.json');
+
 angular.
   module('core.notifications').
   factory('Notifications', ['$timeout', '$log',
     function($timeout, $log) {
       // types: success, info, warning, danger
       const timeout = 4000;
-      const codes = {
-        success: 200,
-        badRequest: 400,
-        unauthorized: 401,
-        nopermission: 403,
-        notFound: 404,
-        serverError: 500,
-        dbNotConnected: 503,
-        svgNotSupported: 420,
-        tooCloseSeat: 421,
-        idRequired: 422,
-        idUnique: 423,
-        seatNotFound: 424,
-        floorIDRequired: 425,
-        employeeNotFound: 426,
-      };
-      const ignored = ['success'];
+      const codes = notificationCodes;
+      const ignored = [];
 
       this.notifications = [];
       this.notificationsLog = [];
@@ -34,7 +21,11 @@ angular.
 
       const add = (code, notification) => {
         if (notification) {
+          notification.timestamp = (new Date()).toISOString();
           this.notifications.push(notification);
+          this.notificationsLog.push(notification);
+          $timeout(() => remove(notification), timeout);
+          $log.debug('- add custom notification:');
           $log.debug(notification);
           return;
         }
@@ -110,6 +101,13 @@ angular.
             code: codes.idRequired
           };
           break;
+        case codes.floorIDRequired:
+          newNotification = {
+            msg: 'Floor ID is required. Action denied',
+            type: 'danger',
+            code: codes.floorIDRequired
+          };
+          break;
         case codes.idUnique:
           newNotification = {
             msg: 'ID must be unique. Action denied',
@@ -124,18 +122,18 @@ angular.
             code: codes.seatNotFound
           };
           break;
-        case codes.floorIDRequired:
-          newNotification = {
-            msg: 'Floor ID is required. Action denied',
-            type: 'danger',
-            code: codes.floorIDRequired
-          };
-          break;
         case codes.employeeNotFound:
           newNotification = {
             msg: 'Employee with such ID wasn\'t found. Action denied',
             type: 'danger',
             code: codes.employeeNotFound
+          };
+          break;
+        case codes.floorNotFound:
+          newNotification = {
+            msg: 'Floor with such ID wasn\'t found. Action denied',
+            type: 'danger',
+            code: codes.floorNotFound
           };
           break;
         }

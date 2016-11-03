@@ -28,7 +28,7 @@ module.exports = function(app, passport) {
   });
 
   // servises:
-  require('./api.js')(router, passport);
+  require('./api/api.js')(router, passport);
 
   app.use(router);
 

@@ -5,6 +5,8 @@
   margin-right: -150px
   &.isAttachedTop
     top: 70px
+  // &-selection-mode
+  //   display: none !important
   .iziModal-header
     transition: background-color .3s ease-out
   .modal
@@ -25,7 +27,7 @@
           position: absolute
           right: 3px
           cursor: pointer
-          top: 50%
+          top: 17px
           transform: translateY(-50%)
           color: rgba(black,.9)
           transition: color .2s ease-out
@@ -36,7 +38,7 @@
     &-input-value
       margin-bottom: 0
       padding-top: 7px
-    &-employee-list
+    &-search-list
       position: relative
       top: 0
       width: 100%
@@ -137,3 +139,6 @@
       border-bottom-color: $successColor !important
       .modal-notification-msg
         background-color: rgba($successColor, .5)
+
+#modal-alert.iziModal
+  transition: bottom .3s ease-out

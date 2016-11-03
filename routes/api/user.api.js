@@ -1,27 +1,8 @@
 'use strict';
 
-const dbConnection = require('../db/db')().getDBconnection();
-const utils = require('./utils');
+const utils = require('./../utils');
 
 module.exports = (router, passport) => {
-
-
-  //
-  // aplication status interface
-  //
-
-  router.all('/status/:action', (req, res) => {
-    switch (req.params.action) {
-
-    case 'dbconnection':
-      res.send({dbconnected: dbConnection.readyState});
-      break;
-
-    default:
-      res.redirect('/');
-      throw new Error('Wrong request path');
-    }
-  });
 
 
   //
@@ -65,22 +46,4 @@ module.exports = (router, passport) => {
       }
     }
   );
-
-
-  //
-  // employees interface
-  //
-
-  router.all('/employees/:action', (req, res) => {
-    switch (req.params.action) {
-
-    case 'get':
-      utils.sendEmployees(req, res);
-      break;
-
-    default:
-      res.redirect('/');
-      throw new Error('Wrong request path');
-    }
-  });
 };
