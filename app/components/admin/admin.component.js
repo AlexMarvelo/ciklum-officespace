@@ -7,23 +7,19 @@ angular.
   component('admin', {
     controller: ['$scope', 'Floor', 'Notifications',
       function AdminCtrl($scope, Floor, Notifications) {
-        this.$onInit = () => {
-          this.getFloors();
-        };
-
-
-        this.getFloors = () => {
-          Floor().getAllConfigs()
-            .then(floors => {
-              $scope.$apply(() => {
-                this.floorsCache = floors.map(floor => Object.assign({}, floor));
-                this.floors = floors.slice(0).map(floor => {
-                  floor.oldID = floor.id;
-                  return floor;
-                });
-              });
-            }, () => {});
-        };
+        $scope.$watch(
+          Floor().returnAllConfigs,
+          floors => {
+            this.floorsCache = floors.map(floor => Object.assign({}, floor));
+            this.floors = floors.map(floor => {
+              floor = Object.assign({}, floor);
+              floor.oldID = floor.id;
+              floor.saved = true;
+              return floor;
+            });
+          },
+          true
+        );
 
 
         this.onFloorSaveClick = (event, floor) => {
@@ -47,26 +43,12 @@ angular.
 
         this.addConfig = (floor) => {
           Floor().addConfig(floor)
-            .then(() => {
-              $scope.$apply(() => {
-                this.getFloors();
-              });
-            })
-            .catch(() => {
-              $scope.$apply(() => {});
-            });
+            .catch(() => {});
         };
 
         this.updateConfig = (floor) => {
           Floor(floor.oldID).updateConfig(floor)
-            .then(() => {
-              $scope.$apply(() => {
-                this.getFloors();
-              });
-            })
-            .catch(() => {
-              $scope.$apply(() => {});
-            });
+            .catch(() => {});
         };
 
 
@@ -77,14 +59,8 @@ angular.
           })
           .then(() => {
             Floor(floor.oldID).removeFloor()
-              .then(() => {
-                $scope.$apply(() => {
-                  this.getFloors();
-                });
-              })
-              .catch(() => {
-                $scope.$apply(() => {});
-              });
+              .then(() => $scope.$apply())
+              .catch(() => {});
           }, () => {});
         };
 
@@ -146,7 +122,7 @@ angular.
                         <button type="button" ng-click="$ctrl.onFloorSaveClick($event, floor)" class="btn btn-primary">Save</button>
                       </div>
                       <div class="col-xs-6 col-thinpad-left">
-                        <button ng-if="floor.saved != false" type="button" ng-click="$ctrl.onFloorRemoveClick($event, floor)" class="btn btn-danger">Remove</button>
+                        <button ng-if="floor.saved" type="button" ng-click="$ctrl.onFloorRemoveClick($event, floor)" class="btn btn-danger">Remove</button>
                       </div>
                     </div>
                   </th>

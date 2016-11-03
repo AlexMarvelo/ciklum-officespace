@@ -5,21 +5,21 @@ angular.
   component('homepage', {
     controller: ['$scope', 'Floor',
       function HomepageCtrl($scope, Floor) {
-        Floor().getAllConfigs()
-          .then(floors => {
-            $scope.$apply(() => {
-              this.floors = floors
-                .map(floor => {
-                  floor.title = floor.title || floor.id;
-                  return floor;
-                })
-                .sort((a, b) => {
-                  if (a.title < b.title) return -1;
-                  if (a.title > b.title) return 1;
-                  return 0;
-                });
-            });
-          }, () => {});
+        $scope.$watch(
+          Floor().returnAllConfigs,
+          floors => {
+            this.floors = floors
+              .map(floor => {
+                floor.title = floor.title || floor.id;
+                return floor;
+              })
+              .sort((a, b) => {
+                if (a.title < b.title) return -1;
+                if (a.title > b.title) return 1;
+                return 0;
+              });
+          }
+        );
       }
     ],
 
