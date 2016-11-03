@@ -1,5 +1,7 @@
 'use strict';
 
-angular.module('core.employees', []);
+require('angular-resource/angular-resource');
+
+angular.module('core.employees', ['ngResource']);
 
 require('./employees.service');

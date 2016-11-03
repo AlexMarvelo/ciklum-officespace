@@ -1,5 +1,7 @@
 'use strict';
 
-angular.module('core.floor', []);
+require('angular-resource/angular-resource');
+
+angular.module('core.floor', ['ngResource']);
 
 require('./floor.service');

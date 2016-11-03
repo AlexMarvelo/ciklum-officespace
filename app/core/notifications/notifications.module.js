@@ -1,5 +1,7 @@
 'use strict';
 
-angular.module('core.notifications', []);
+require('angular-resource/angular-resource');
+
+angular.module('core.notifications', ['ngResource']);
 
 require('./notifications.service');
