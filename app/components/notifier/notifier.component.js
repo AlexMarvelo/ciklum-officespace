@@ -9,6 +9,7 @@ angular.
       function NotifierCtrl($scope, Notifications) {
         this.notifications = [];
         const modalAlertWidth = 600;
+        const modalHeight = 50;
         const modalAlertFrame = {
           attached: 'bottom',
           width: modalAlertWidth,
@@ -30,12 +31,12 @@ angular.
           Notifications.get,
           updatedNotifications => {
             updatedNotifications.forEach(notification => {
-              if (this.notifications.find(n => n.timestamp == notification.timestamp) == undefined) {
+              if (!this.notifications.find(n => n.timestamp == notification.timestamp)) {
                 this.showNotification(Object.assign({}, notification));
               }
             });
             [].concat(this.notifications).forEach(notification => {
-              if (updatedNotifications.find(n => n.timestamp == notification.timestamp) == undefined) {
+              if (!updatedNotifications.find(n => n.timestamp == notification.timestamp)) {
                 this.hideNotification(Object.assign({}, notification));
               }
             });
@@ -47,7 +48,7 @@ angular.
         this.showNotification = (notification) => {
           const modalAlert = window.jQuery('<div id="modal-alert"></div>');
           window.jQuery('body').append(modalAlert);
-          modalAlert.css('bottom', this.notifications.length * 60);
+          modalAlert.css('bottom', this.notifications.length * (modalHeight+10));
           let color;
           switch (notification.type) {
           case 'success':
@@ -70,7 +71,9 @@ angular.
             headerColor: color,
             onOpening: () => {
               modalAlert.find('.iziModal-button-close').click(() => {
-                Notifications.remove(notification);
+                $scope.$apply(() => {
+                  Notifications.remove(notification);
+                });
               });
             },
             onClosed: () => {
@@ -90,6 +93,10 @@ angular.
           const index = this.notifications.indexOf(
             this.notifications.find(n => n.timestamp == notification.timestamp)
           );
+          this.notifications.forEach((n, i) => {
+            if (i <= index) return;
+            n.modalAlert.css('bottom', (i - 1) * (modalHeight+10));
+          });
           this.notifications.splice(index, 1);
         };
       }

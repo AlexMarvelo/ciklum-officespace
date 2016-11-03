@@ -241,6 +241,8 @@ angular.
 
 
 
+
+
         // ------------------
         // seat modal methods
         // ------------------
@@ -564,6 +566,8 @@ angular.
 
 
 
+
+
         // ----------------------
         // Employee modal methods
         // ----------------------
@@ -650,6 +654,7 @@ angular.
               this.employee.seat = seat;
               if (this.employee.seat && this.employee.seat.floorID != floorID) {
                 this.pasteEmployeeAnotherSeatBlock();
+                this.mapcanvas.deactivateAllSeats();
                 return;
               }
               this.pasteEmployeeSeatBlock();
