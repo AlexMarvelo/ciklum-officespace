@@ -104,7 +104,8 @@ angular.
             }
             this.seat = seat;
             if (this.seat) this.mapcanvas.activateOneSeat(this.seat);
-          }
+          },
+          true
         );
 
         $scope.$watch(
@@ -116,7 +117,8 @@ angular.
               this.updateEmployeeDetailsModal();
               return;
             }
-          }
+          },
+          true
         );
 
         $scope.$watch(

@@ -143,6 +143,8 @@ angular.
           if (!activeSeat) {
             if (this.activeSeat) $log.debug(`- unset active seat on ${floorID} floor`);
             this.activeSeat = undefined;
+            console.log('- new active seat:');
+            console.log(this.activeSeat);
             return;
           }
           if (activeSeat.id == undefined) {
