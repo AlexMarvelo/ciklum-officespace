@@ -174,7 +174,12 @@ utils.removeFloor = (req, res, floorID) => {
     res.send({ status: notificationCodes.floorIDRequired });
     return;
   }
-  // TODO remove seats on floor firstly
+  Seat.remove({floorID}).exec()
+    .catch(error => {
+      error.status = notificationCodes.serverError;
+      res.send(error);
+      throw error;
+    });
   Floor.remove({id: floorID}).exec()
     .then(() => {
       res.send({ status: notificationCodes.success });
