@@ -575,7 +575,6 @@ angular.
               this.floors[config.id] = this.floors[config.id] || Object.assign({}, initFloorState);
               this.floors[config.id].config = config;
             });
-            console.dir(this.floors);
             resolve(response.configs);
           });
         })
