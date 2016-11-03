@@ -47,19 +47,10 @@ angular
       }])
 
     .controller('CiklumSpace.Controller', [
-      '$scope', '$rootScope', '$log', 'localStorageService', 'User', 'Notifications', 'Status',
-      function($scope, $rootScope, $log, localStorageService, User, Notifications, Status) {
+      'User',
+      function(User) {
         this.$onInit = () => {
           User.init();
-          this.checkDBconnection();
-        };
-
-        this.checkDBconnection = () => {
-          Status.serverRequest.dbconnection(res => {
-            if (!res.dbconnected) {
-              Notifications.add(Notifications.codes.dbNotConnected);
-            }
-          });
         };
       }])
 

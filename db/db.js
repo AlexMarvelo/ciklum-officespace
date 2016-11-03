@@ -38,12 +38,6 @@ module.exports = (app) => {
       initDB();
     });
   }
-
-  const getDBconnection = () => db;
-
-  return {
-    getDBconnection
-  };
 };
 
 function initDB() {
