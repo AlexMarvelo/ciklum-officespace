@@ -30,11 +30,17 @@ angular.
               action: 'getconfig',
             }
           },
-          setConfig: {
+          addConfig: {
+            method: 'POST',
+            params: {
+              action: 'addconfig',
+            }
+          },
+          updateConfig: {
             method: 'POST',
             params: {
               floorID: floorID,
-              action: 'setconfig',
+              action: 'updateconfig',
             }
           },
           getAllConfigs: {
@@ -437,6 +443,12 @@ angular.
             throw { status: Notifications.codes.floorIDRequired };
           }
 
+          if (this.floors[floorID] && this.floors[floorID].config) {
+            $log.debug(`- use cached floor config for ${floorID} floor`);
+            resolve(this.floors[floorID].config);
+            return;
+          }
+
           this.floorServerRequest().getConfig(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
@@ -455,7 +467,44 @@ angular.
       };
 
 
-      this.setConfig = (config) => {
+      this.addConfig = (config) => {
+        return new Promise((resolve) => {
+          if (!config.id) {
+            throw { status: Notifications.codes.idRequired };
+          }
+          for (let fID in this.floors) {
+            if (fID == config.id) {
+              throw { status: Notifications.codes.idUnique };
+            }
+          }
+
+          let floor = Object.assign({}, initFloorState);
+          floor.config = {
+            id: config.id,
+            title: config.title,
+            mapSource: config.mapSource,
+            width: config.width || defaultWidth,
+          };
+          this.floorServerRequest().addConfig({config: floor.config}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            this.floors[config.id] = floor;
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- set ${config.id} floor config`);
+            resolve(response);
+          });
+        })
+        .catch(error => {
+          Notifications.add(error.status);
+          throw error;
+        });
+      };
+
+
+      this.updateConfig = (config) => {
         const floorID = this.floorID;
         return new Promise((resolve) => {
           if (!floorID) {
@@ -469,26 +518,33 @@ angular.
               throw { status: Notifications.codes.idUnique };
             }
           }
+          let floor;
+          for (let fID in this.floors) {
+            if (fID != floorID) continue;
+            floor = Object.assign({}, this.floors[fID]);
+          }
+          if (!floor) {
+            throw { status: Notifications.codes.floorNotFound };
+          }
 
-          let floor = this.floors[floorID] ? Object.assign({}, this.floors[floorID]) : Object.assign({}, initFloorState);
-          floor.config = floor.config || {};
-          floor.config.id = config.id;
-          floor.config.title = config.title;
-          floor.config.mapSource = config.mapSource;
-          floor.config.width = config.width || defaultWidth;
-
-          this.floorServerRequest().setConfig({config: floor.config}).$promise
-            .then(response => {
-              if (response.status != Notifications.codes.success) {
-                Notifications.add(response.status);
-                if (CONFIG.consoleErrors) $log.error(response);
-                return;
-              }
-              this.floors[config.id] = floor;
-              Notifications.add(Notifications.codes.success);
-              $log.debug(`- set/update ${floorID} floor config`);
-              resolve(response);
-            });
+          floor.config = {
+            id: config.id,
+            title: config.title,
+            mapSource: config.mapSource,
+            width: config.width || defaultWidth,
+          };
+          this.floorServerRequest().updateConfig({config: floor.config}, response => {
+            if (response.status != Notifications.codes.success) {
+              Notifications.add(response.status);
+              if (CONFIG.consoleErrors) $log.error(response);
+              return;
+            }
+            if (config.id != floorID) delete this.floors[config.id];
+            this.floors[config.id] = floor;
+            Notifications.add(Notifications.codes.success);
+            $log.debug(`- update ${floorID} floor config`);
+            resolve(response);
+          });
         })
         .catch(error => {
           Notifications.add(error.status);
@@ -499,12 +555,27 @@ angular.
 
       this.getAllConfigs = () => {
         return new Promise((resolve) => {
+          if (Object.keys(this.floors).length) {
+            let configs = [];
+            for (let fID in this.floors) {
+              configs.push(this.floors[fID].config);
+            }
+            $log.debug('- use cahced floor configs list');
+            resolve(configs);
+            return;
+          }
+
           this.floorServerRequest().getAllConfigs(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
               return;
             }
+            response.configs.forEach(config => {
+              this.floors[config.id] = this.floors[config.id] || Object.assign({}, initFloorState);
+              this.floors[config.id].config = config;
+            });
+            console.dir(this.floors);
             resolve(response.configs);
           });
         })
@@ -546,7 +617,7 @@ angular.
       return (floorID) => {
         this.floorID = floorID;
         return {
-          
+
           // seats interface:
           getSeats: this.getSeats,
           loadSeats: this.loadSeats,
@@ -562,7 +633,8 @@ angular.
           // config interface:
           getConfig: this.getConfig,
           getAllConfigs: this.getAllConfigs,
-          setConfig: this.setConfig,
+          addConfig: this.addConfig,
+          updateConfig: this.updateConfig,
           removeFloor: this.removeFloor,
         };
       };

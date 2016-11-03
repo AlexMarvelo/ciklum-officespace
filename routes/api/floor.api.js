@@ -16,8 +16,12 @@ module.exports = (router) => {
       utils.getFloorConfig(req, res, req.params.floorID);
       break;
 
-    case 'setconfig':
-      utils.setFloorConfig(req, res, req.params.floorID, req.body.config);
+    case 'addconfig':
+      utils.addFloorConfig(req, res, req.body.config);
+      break;
+
+    case 'updateconfig':
+      utils.updateFloorConfig(req, res, req.params.floorID, req.body.config);
       break;
 
     case 'getallconfigs':

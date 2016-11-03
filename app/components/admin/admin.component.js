@@ -32,20 +32,41 @@ angular.
             Notifications.add(Notifications.codes.idUnique);
             return;
           }
+          const newFloor = this.floorsCache.find(f => f.id == floor.oldID) == undefined;
           confirm({
-            msg: `Are you sure to update ${floor.oldID} floor config?`,
+            msg: `Are you sure to ${newFloor ? 'set' : 'update'} ${floor.oldID} floor config?`,
           })
           .then(() => {
-            Floor(floor.oldID).setConfig(floor)
-              .then(() => {
-                $scope.$apply(() => {
-                  this.getFloors();
-                });
-              })
-              .catch(() => {
-                $scope.$apply(() => {});
-              });
+            if (newFloor) {
+              this.addConfig(floor);
+            } else {
+              this.updateConfig(floor);
+            }
           }, () => {});
+        };
+
+        this.addConfig = (floor) => {
+          Floor().addConfig(floor)
+            .then(() => {
+              $scope.$apply(() => {
+                this.getFloors();
+              });
+            })
+            .catch(() => {
+              $scope.$apply(() => {});
+            });
+        };
+
+        this.updateConfig = (floor) => {
+          Floor(floor.oldID).updateConfig(floor)
+            .then(() => {
+              $scope.$apply(() => {
+                this.getFloors();
+              });
+            })
+            .catch(() => {
+              $scope.$apply(() => {});
+            });
         };
 
 

@@ -129,6 +129,13 @@ angular.
             code: codes.employeeNotFound
           };
           break;
+        case codes.floorNotFound:
+          newNotification = {
+            msg: 'Floor with such ID wasn\'t found. Action denied',
+            type: 'danger',
+            code: codes.floorNotFound
+          };
+          break;
         }
         if (!newNotification) return;
         if (ignored.find(ignoredKey => codes[ignoredKey] == newNotification.code)) return;

@@ -12,5 +12,6 @@
     "idUnique": 423,
     "seatNotFound": 424,
     "employeeNotFound": 425,
-    "floorIDRequired": 426
+    "floorIDRequired": 426,
+    "floorNotFound": 427
 }

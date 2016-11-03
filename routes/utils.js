@@ -86,50 +86,63 @@ utils.getFloorConfig = (req, res, floorID) => {
 };
 
 
-utils.setFloorConfig = (req, res, floorID, config = {}) => {
+utils.addFloorConfig = (req, res, floorConfig) => {
+  const addFloorConfig = () => {
+    const floor = new Floor(floorConfig );
+    floor.save()
+      .then(() => {
+        res.send({ status: notificationCodes.success });
+      })
+      .catch(error => { throw error; });
+  };
+
+  if (!floorConfig.id) {
+    res.send({ status: notificationCodes.idRequired });
+    return;
+  }
+  Floor.find({id: floorConfig.id})
+    .then(floors => {
+      if (floors.length) {
+        res.send({ status: notificationCodes.idUnique });
+        return;
+      }
+      addFloorConfig();
+    })
+    .catch(error => {
+      error.status = notificationCodes.serverError;
+      res.send(error);
+      throw error;
+    });
+};
+
+
+utils.updateFloorConfig = (req, res, floorID, floorConfig = {}) => {
   const setFloorConfig = () => {
     Floor.find({id: floorID}).exec()
       .then(floors => {
-        if (floors.length == 0) {
-          const floor = new Floor(config);
-          floor.save()
-            .then(() => {
-              res.send({ status: notificationCodes.success });
-            })
-            .catch(error => {
-              error.status = notificationCodes.serverError;
-              res.send(error);
-              throw error;
-            });
+        if (!floors.length) {
+          res.send({ status: notificationCodes.floorNotFound });
           return;
         }
-        let floor = floors[0];
-        floor.update(config)
+        const floor = floors[0];
+        floor.update(floorConfig)
           .then(() => {
             res.send({ status: notificationCodes.success });
           })
-          .catch(error => {
-            error.status = notificationCodes.serverError;
-            res.send(error);
-            throw error;
-          });
+          .catch(error => { throw error; });
       })
-      .catch(error => {
-        error.status = notificationCodes.serverError;
-        res.send(error);
-        throw error;
-      });
+      .catch(error => { throw error; });
   };
 
   if (!floorID) {
     res.send({ status: notificationCodes.floorIDRequired });
     return;
   }
-  if (!config.id) {
+  if (!floorConfig.id) {
     res.send({ status: notificationCodes.idRequired });
     return;
   }
-  Floor.find({$and: [ {id: config.id}, {id: {$ne: floorID}} ]})
+  Floor.find({$and: [ {id: floorConfig.id}, {id: {$ne: floorID}} ]})
     .then(floors => {
       if (floors.length) {
         res.send({ status: notificationCodes.idUnique });
