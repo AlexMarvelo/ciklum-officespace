@@ -108,6 +108,7 @@ class Mapcanvas {
         $scope: this.$scope,
         width: this.config.width,
         height: this.config.height,
+        authorized: this.User.authorized(),
       },
       coords,
       seatID,
@@ -161,6 +162,7 @@ class Mapcanvas {
           $scope: this.$scope,
           width: this.config.width,
           height: this.config.height,
+          authorized: this.User.authorized(),
         }, {
           x: seat.x,
           y: seat.y

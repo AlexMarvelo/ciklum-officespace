@@ -10,6 +10,7 @@ class Seat {
       transitionDuration: 300,
     };
 
+    this.authorized = mapcanvas.authorized;
     this.mapcanvas = mapcanvas;
     this.x = coords.x;
     this.y = coords.y;
@@ -23,42 +24,45 @@ class Seat {
       .stroke({ color: colors.themeColor, opacity: 0.6, width: this.config.strokeWidth })
       .center(this.x, this.y)
       .addClass('seat');
-    this.group.draggable({
-      // TODO fix dragging limits
-      // minX: - this.x + this.config.radius,
-      // minY: - this.y + this.config.radius,
-      // maxX: this.mapcanvas.width - this.x,
-      // maxY: this.mapcanvas.height - this.y
-    });
 
     this.setTooltip(tooltipTitle);
 
-    // TODO fix dragging jsut after creating seat by click - not moving
-
-    this.group.on('dragstart.seat', event => {
-      this.oldX = event.detail.p.x;
-      this.oldY = event.detail.p.y;
-      this.status = 'dragging';
-      this.hideTooltip();
-    });
-
-    this.group.on('dragend.seat', event => {
-      const newX = event.detail.p.x;
-      const newY = event.detail.p.y;
-      this.x = this.x + newX - this.oldX;
-      this.y = this.y + newY - this.oldY;
-      this.status = undefined;
-      this.showTooltip();
-      this.active = true;
-      this.mapcanvas.$scope.$apply(() => {
-        this.mapcanvas.$scope.activeSeat = {
-          id: this.id,
-          x: this.x,
-          y: this.y,
-          moved: newX - this.oldX != 0 || newY - this.oldY != 0,
-        };
+    if (this.authorized) {
+      this.group.draggable({
+        // TODO fix dragging limits
+        // minX: - this.x + this.config.radius,
+        // minY: - this.y + this.config.radius,
+        // maxX: this.mapcanvas.width - this.x,
+        // maxY: this.mapcanvas.height - this.y
       });
-    });
+
+      // TODO fix dragging jsut after creating seat by click - not moving
+
+      this.group.on('dragstart.seat', event => {
+        this.oldX = event.detail.p.x;
+        this.oldY = event.detail.p.y;
+        this.status = 'dragging';
+        this.hideTooltip();
+      });
+
+      this.group.on('dragend.seat', event => {
+        const newX = event.detail.p.x;
+        const newY = event.detail.p.y;
+        this.x = this.x + newX - this.oldX;
+        this.y = this.y + newY - this.oldY;
+        this.status = undefined;
+        this.showTooltip();
+        this.active = true;
+        this.mapcanvas.$scope.$apply(() => {
+          this.mapcanvas.$scope.activeSeat = {
+            id: this.id,
+            x: this.x,
+            y: this.y,
+            moved: newX - this.oldX != 0 || newY - this.oldY != 0,
+          };
+        });
+      });
+    }
 
     this.svg.click(() => {
       if (this.active) return;
