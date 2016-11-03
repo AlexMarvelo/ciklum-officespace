@@ -9,7 +9,7 @@ angular.
       // types: success, info, warning, danger
       const timeout = 4000;
       const codes = notificationCodes;
-      const ignored = [];
+      const ignored = ['success'];
 
       this.notifications = [];
       this.notificationsLog = [];
