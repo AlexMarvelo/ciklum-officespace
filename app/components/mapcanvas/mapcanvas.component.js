@@ -5,14 +5,15 @@ const Mapcanvas = require('./mapcanvas.core');
 angular.
   module('mapcanvas').
   component('mapcanvas', {
-    controller: ['$scope', '$log', '$stateParams', '$timeout', 'Notifications', 'User', 'Floor', 'Employees',
-      function MapCanvasCtrl($scope, $log, $stateParams, $timeout, Notifications, User, Floor, Employees) {
+    controller: ['$scope', '$log', '$stateParams', '$timeout', 'Notifications', 'User', 'Floor', 'Employees', 'CONFIG',
+      function MapCanvasCtrl($scope, $log, $stateParams, $timeout, Notifications, User, Floor, Employees, CONFIG) {
         const floorID = $stateParams.floorID;
         this.mapcanvas = new Mapcanvas($scope, $log, floorID, {
           Notifications,
           User,
           Floor,
           Employees,
+          CONFIG,
         });
 
 
@@ -31,7 +32,7 @@ angular.
             if (!ready) return;
             if (!SVG.supported) {
               Notifications.add(Notifications.codes.svgNotSupported);
-              $log.error('SVG not supported');
+              if (CONFIG.consoleErrors) $log.error('SVG not supported');
               return;
             }
             const img = document.getElementById('mapcanvas-map');

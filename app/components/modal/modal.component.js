@@ -6,8 +6,9 @@ const confirm = require('../confirm/confirm.core');
 angular.
   module('modal').
   component('modal', {
-    controller: ['$scope', '$rootScope', '$state', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'Notifications', 'User',
-      function ModalCtrl($scope, $rootScope, $state, $stateParams, $timeout, $log, Floor, Employees, Notifications, User) {
+    controller: [
+      '$scope', '$rootScope', '$state', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'Notifications', 'User', 'CONFIG',
+      function ModalCtrl($scope, $rootScope, $state, $stateParams, $timeout, $log, Floor, Employees, Notifications, User, CONFIG) {
         const floorID = $stateParams.floorID;
         const modalWidth = 300;
         const modalNotificationDelay = 300;
@@ -384,7 +385,7 @@ angular.
                 }));
                 this.modal.iziModal('close');
               }, () => {})
-              .catch(error => $log.error(error));
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
           }, () => {});
         };
 
@@ -402,7 +403,7 @@ angular.
                 this.mapcanvas.removeSeat(seat);
                 this.modal.iziModal('close');
               }, () => {})
-              .catch(error => $log.error(error));
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
           }, () => {});
         };
 
@@ -422,7 +423,7 @@ angular.
                   tooltipTitle: undefined
                 }));
               }, () => {})
-              .catch(error => $log.error(error));
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
           }, () => {});
         };
 
@@ -640,7 +641,7 @@ angular.
                     this.mapcanvas.activateOneSeat({id: seatID});
                     this.modal.iziModal('close');
                   }, () => {})
-                  .catch(error => $log.error(error));
+                  .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
               } else {
                 Floor(floorID).attachEmployeeToSeat(this.employee.seatID, undefined)
                   .then(() => {
@@ -648,7 +649,7 @@ angular.
                     this.mapcanvas.deactivateAllSeats();
                     this.modal.iziModal('close');
                   }, () => {})
-                  .catch(error => $log.error(error));
+                  .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
               }
             }, () => {});
           });
@@ -667,7 +668,7 @@ angular.
               this.pasteEmployeeSeatBlock();
               this.mapcanvas.activateOneSeat(this.employee.seat);
             }, () => {})
-            .catch(error => $log.error(error));
+            .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
         };
 
 
@@ -737,7 +738,7 @@ angular.
           seatList.click(event => {
             const seat = this.getSeat(event.target.dataset.id);
             if (!seat) {
-              $log.error('- seat with such ID not found');
+              if (CONFIG.consoleErrors) $log.error('- seat with such ID not found');
               return;
             }
             seatTitleField.val(`${seat.title || seat.id}`);
@@ -793,7 +794,7 @@ angular.
                 this.employee.seat = undefined;
                 this.clearSeatsList();
               }, () => {})
-              .catch(error => $log.error(error));
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
           }, () => {});
         };
 
