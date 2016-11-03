@@ -116,7 +116,7 @@ utils.addFloorConfig = (req, res, floorConfig) => {
 };
 
 
-utils.updateFloorConfig = (req, res, floorID, floorConfig = {}) => {
+utils.updateFloorConfig = (req, res, floorID, floorConfig) => {
   const setFloorConfig = () => {
     Floor.find({id: floorID}).exec()
       .then(floors => {
@@ -138,7 +138,7 @@ utils.updateFloorConfig = (req, res, floorID, floorConfig = {}) => {
     res.send({ status: notificationCodes.floorIDRequired });
     return;
   }
-  if (!floorConfig.id) {
+  if (!floorConfig || !floorConfig.id) {
     res.send({ status: notificationCodes.idRequired });
     return;
   }
@@ -220,7 +220,7 @@ utils.getSeat = (req, res, seatID) => {
 };
 
 
-utils.addSeat = (req, res, seat = {}) => {
+utils.addSeat = (req, res, seat) => {
   const addSeat = () => {
     const seatInst = new Seat(seat);
     seatInst.save()
@@ -230,7 +230,7 @@ utils.addSeat = (req, res, seat = {}) => {
       .catch(error => { throw error; });
   };
 
-  if (!seat.id) {
+  if (!seat || !seat.id) {
     res.send({ status: notificationCodes.idRequired });
     return;
   }
