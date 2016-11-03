@@ -461,9 +461,6 @@ angular.
             }
             this.floors[floorID] = this.floors[floorID] || Object.assign({}, initFloorState);
             this.floors[floorID].config = response.config;
-            console.log('---');
-            console.log(this.floors);
-            console.log(this.configList);
             resolve(response.config);
           });
         })
@@ -502,9 +499,6 @@ angular.
             this.configList.push(floorConfig);
             Notifications.add(Notifications.codes.success);
             $log.debug(`- set ${config.id} floor config`);
-            console.log('---');
-            console.log(this.floors);
-            console.log(this.configList);
             resolve(response);
           });
         })
@@ -558,9 +552,6 @@ angular.
             });
             Notifications.add(Notifications.codes.success);
             $log.debug(`- update ${floorID} floor config`);
-            console.log('---');
-            console.log(this.floors);
-            console.log(this.configList);
             resolve(response);
           });
         })
@@ -600,9 +591,6 @@ angular.
             });
             this.floors = floors;
             this.configList = configList;
-            console.log('---');
-            console.log(this.floors);
-            console.log(this.configList);
             resolve(response.configs);
           });
         })
@@ -630,9 +618,6 @@ angular.
             this.configList = this.configList.filter(c => c.id != floorID);
             Notifications.add(Notifications.codes.success);
             $log.debug(`- remove ${floorID} floor`);
-            console.log('---');
-            console.log(this.floors);
-            console.log(this.configList);
             resolve(response);
           });
         })
