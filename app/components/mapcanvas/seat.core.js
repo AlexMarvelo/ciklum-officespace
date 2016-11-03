@@ -33,6 +33,8 @@ class Seat {
 
     this.setTooltip(tooltipTitle);
 
+    // TODO fix dragging jsut after creating seat by click - not moving
+
     this.group.on('dragstart.seat', event => {
       this.oldX = event.detail.p.x;
       this.oldY = event.detail.p.y;
