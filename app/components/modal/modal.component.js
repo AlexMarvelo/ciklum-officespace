@@ -16,9 +16,9 @@ angular.
           requiredField: 1,
           uniqueField: 2,
         };
-        const unsetEmployeeIconTemplate = '<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true"></span>';
-        const unsetSeatIconTemplate = '<span class="glyphicon glyphicon-remove glyphicon-remove--seat" aria-hidden="true"></span>';
-        const setSeatIconTemplate = '<span class="glyphicon glyphicon-plus glyphicon-plus--seat" aria-hidden="true"></span>';
+        const unsetEmployeeIconTemplate = '<span class="glyphicon glyphicon-remove glyphicon-remove--employee" aria-hidden="true" title="unattach occupant"></span>';
+        const unsetSeatIconTemplate = '<span class="glyphicon glyphicon-remove glyphicon-remove--seat" aria-hidden="true" title="release seat"></span>';
+        const setSeatIconTemplate = '<span class="glyphicon glyphicon-plus glyphicon-plus--seat" aria-hidden="true" title="attach to seat"></span>';
         const modalTools = `
           <div class="modal-notification-container">
             <span class="modal-notification-msg"></span>
