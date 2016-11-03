@@ -1,14 +1,17 @@
 #modal.iziModal
   transition: border-color .3s ease-out
-  padding-bottom: 15px
   overflow: visible !important
   margin-right: -150px
   &.isAttachedTop
     top: 70px
-  // &-selection-mode
-  //   display: none !important
-  .iziModal-header
-    transition: background-color .3s ease-out
+  &.hasScroll
+    .modal-notification-container
+      display: none
+  .iziModal
+    &-header
+      transition: background-color .3s ease-out
+    &-content
+      margin-bottom: -15px
   .modal
     &-btn-control
       width: 100%
@@ -42,7 +45,6 @@
       position: relative
       top: 0
       width: 100%
-      background-color: white
       >li
         padding: 6px 12px 6px 5px
         cursor: pointer
@@ -55,16 +57,16 @@
       margin-bottom: 0
     &-notification
       &-container
-        position: absolute
-        bottom: -15px
-        left: 0
-        height: 25px
+        position: relative
+        height: 30px
         overflow: hidden
         width: 100%
       &-msg
         position: absolute
         bottom: 0
         left: 50%
+        min-width: 180px
+        text-align: center
         transition: transform .3s ease-out
         transform: translate(-50%, 100%)
         display: block

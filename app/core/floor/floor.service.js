@@ -5,6 +5,7 @@ angular.
   factory('Floor', ['$log', '$resource', 'localStorageService', 'Notifications', 'CONFIG',
     function($log, $resource,localStorageService,  Notifications, CONFIG) {
       this.floors = {};
+      this.configList = [];
       const initFloorState = {
         seats: [],
       };
@@ -20,7 +21,7 @@ angular.
       // -----------
 
 
-      this.floorServerRequest = () => {
+      const floorServerRequest = () => {
         const floorID = this.floorID;
         return $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/floor/:floorID/:action`, {floorID: 'nomatter', action: 'getConfig'}, {
           getConfig: {
@@ -60,7 +61,7 @@ angular.
       };
 
 
-      this.seatServerRequest = (seatID) => {
+      const seatServerRequest = (seatID) => {
         return $resource(`${CONFIG.env == 'production' ? CONFIG.appDomain_remote : CONFIG.appDomain_local}/seat/:seatID/:action`, {seatID: 'nomatter', action: 'getSeat'}, {
           getSeat: {
             method: 'GET',
@@ -184,7 +185,7 @@ angular.
           }
 
           if (!this.floors[floorID]) this.floors[floorID] = Object.assign({}, initFloorState);
-          this.seatServerRequest().addSeat({seatID: seat.id, seat}, response => {
+          seatServerRequest().addSeat({seatID: seat.id, seat}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -211,7 +212,7 @@ angular.
           }
 
           if (!this.floors[floorID]) this.floors[floorID] = initFloorState;
-          this.seatServerRequest().getByFloor({floorID}, response => {
+          seatServerRequest().getByFloor({floorID}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -245,7 +246,7 @@ angular.
           let updatedSeat = Object.assign({}, targetSeat);
           updatedSeat.x = seat.x;
           updatedSeat.y = seat.y;
-          this.seatServerRequest(seat.id).updateSeat({seat: updatedSeat}, response => {
+          seatServerRequest(seat.id).updateSeat({seat: updatedSeat}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -281,7 +282,7 @@ angular.
             throw { status: Notifications.codes.seatNotFound };
           }
 
-          this.seatServerRequest(seatID).updateSeat({seat: updatedSeat}, response => {
+          seatServerRequest(seatID).updateSeat({seat: updatedSeat}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -339,7 +340,7 @@ angular.
             throw { status: Notifications.codes.seatNotFound };
           }
 
-          this.seatServerRequest(seatID).attachEmployee({employeeID}, response => {
+          seatServerRequest(seatID).attachEmployee({employeeID}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -376,7 +377,7 @@ angular.
             throw { status: Notifications.codes.idRequired };
           }
 
-          this.seatServerRequest(seat.id).removeSeat(response => {
+          seatServerRequest(seat.id).removeSeat(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -411,7 +412,7 @@ angular.
             resolve(seat);
             return;
           }
-          this.seatServerRequest().getSeatByEmployee({employeeID: employee.id}, response => {
+          seatServerRequest().getSeatByEmployee({employeeID: employee.id}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -436,20 +437,23 @@ angular.
       // ----------------------
 
 
-      this.getConfig = () => {
+      this.returnConfig = () => this.configList.find(c =>  c.id == this.floorID);
+
+
+      this.getConfig = (forceLoad = false) => {
         const floorID = this.floorID;
         return new Promise((resolve) => {
           if (!floorID) {
             throw { status: Notifications.codes.floorIDRequired };
           }
 
-          if (this.floors[floorID] && this.floors[floorID].config) {
+          if (!forceLoad && this.floors[floorID] && this.floors[floorID].config) {
             $log.debug(`- use cached floor config for ${floorID} floor`);
             resolve(this.floors[floorID].config);
             return;
           }
 
-          this.floorServerRequest().getConfig(response => {
+          floorServerRequest().getConfig(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
@@ -478,20 +482,21 @@ angular.
             }
           }
 
-          let floor = Object.assign({}, initFloorState);
-          floor.config = {
+          const floor = Object.assign({}, initFloorState);
+          const floorConfig = {
             id: config.id,
             title: config.title,
             mapSource: config.mapSource,
             width: config.width || defaultWidth,
           };
-          this.floorServerRequest().addConfig({config: floor.config}, response => {
+          floorServerRequest().addConfig({config: floorConfig}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
               return;
             }
-            this.floors[config.id] = floor;
+            this.floors[floorConfig.id] = floor;
+            this.configList.push(floorConfig);
             Notifications.add(Notifications.codes.success);
             $log.debug(`- set ${config.id} floor config`);
             resolve(response);
@@ -527,20 +532,24 @@ angular.
             throw { status: Notifications.codes.floorNotFound };
           }
 
-          floor.config = {
+          const floorConfig = {
             id: config.id,
             title: config.title,
             mapSource: config.mapSource,
             width: config.width || defaultWidth,
           };
-          this.floorServerRequest().updateConfig({config: floor.config}, response => {
+          floorServerRequest().updateConfig({config: floorConfig}, response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
               return;
             }
-            if (config.id != floorID) delete this.floors[config.id];
-            this.floors[config.id] = floor;
+            if (floorConfig.id != floorID) delete this.floors[floorConfig.id];
+            this.floors[floorConfig.id] = floor;
+            this.configList = this.configList.map(c => {
+              if (c.id == floorID) return floorConfig;
+              return c;
+            });
             Notifications.add(Notifications.codes.success);
             $log.debug(`- update ${floorID} floor config`);
             resolve(response);
@@ -553,9 +562,12 @@ angular.
       };
 
 
-      this.getAllConfigs = () => {
+      this.returnAllConfigs = () => this.configList;
+
+
+      this.getAllConfigs = (forceLoad = false) => {
         return new Promise((resolve) => {
-          if (Object.keys(this.floors).length) {
+          if (CONFIG.useCache && !forceLoad && Object.keys(this.floors).length) {
             let configs = [];
             for (let fID in this.floors) {
               configs.push(this.floors[fID].config);
@@ -565,16 +577,20 @@ angular.
             return;
           }
 
-          this.floorServerRequest().getAllConfigs(response => {
+          floorServerRequest().getAllConfigs(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
               return;
             }
+            let floors = Object.assign({}, this.floors);
+            let configList = [];
             response.configs.forEach(config => {
-              this.floors[config.id] = this.floors[config.id] || Object.assign({}, initFloorState);
-              this.floors[config.id].config = config;
+              floors[config.id] = floors[config.id] || Object.assign({}, initFloorState);
+              configList.push(config);
             });
+            this.floors = floors;
+            this.configList = configList;
             resolve(response.configs);
           });
         })
@@ -592,13 +608,14 @@ angular.
             throw { status: Notifications.codes.idRequired };
           }
 
-          this.floorServerRequest().removeFloor(response => {
+          floorServerRequest().removeFloor(response => {
             if (response.status != Notifications.codes.success) {
               Notifications.add(response.status);
               if (CONFIG.consoleErrors) $log.error(response);
               return;
             }
             delete this.floors[floorID];
+            this.configList = this.configList.filter(c => c.id != floorID);
             Notifications.add(Notifications.codes.success);
             $log.debug(`- remove ${floorID} floor`);
             resolve(response);
@@ -631,7 +648,9 @@ angular.
 
           // config interface:
           getConfig: this.getConfig,
+          returnConfig: this.returnConfig,
           getAllConfigs: this.getAllConfigs,
+          returnAllConfigs: this.returnAllConfigs,
           addConfig: this.addConfig,
           updateConfig: this.updateConfig,
           removeFloor: this.removeFloor,

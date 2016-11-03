@@ -6,8 +6,9 @@ const confirm = require('../confirm/confirm.core');
 angular.
   module('modal').
   component('modal', {
-    controller: ['$scope', '$rootScope', '$state', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'Notifications', 'User',
-      function ModalCtrl($scope, $rootScope, $state, $stateParams, $timeout, $log, Floor, Employees, Notifications, User) {
+    controller: [
+      '$scope', '$rootScope', '$state', '$stateParams', '$timeout', '$log', 'Floor', 'Employees', 'Notifications', 'User', 'CONFIG',
+      function ModalCtrl($scope, $rootScope, $state, $stateParams, $timeout, $log, Floor, Employees, Notifications, User, CONFIG) {
         const floorID = $stateParams.floorID;
         const modalWidth = 300;
         const modalNotificationDelay = 300;
@@ -311,8 +312,13 @@ angular.
                 employee.lastName.toLowerCase().indexOf(query) != -1 ||
                 (employee.firstName.toLowerCase() + ' ' + employee.lastName.toLowerCase()).indexOf(query) != -1
               )
-              .map(employee => `<li data-id="${employee.id}">${employee.firstName} ${employee.lastName}</li>`)
-              .sort();
+              .sort((a, b) => {
+                if (a.firstName < b.firstName) return -1;
+                if (a.firstName > b.firstName) return 1;
+                return 0;
+              })
+              .map(employee => `<li data-id="${employee.id}">${employee.firstName} ${employee.lastName}</li>`);
+
             form.find('.glyphicon-remove--employee').remove();
             employeeList.html(query.length ? newList.join('') : '');
           });
@@ -378,9 +384,9 @@ angular.
                   tooltipTitle: newEmployee ? `${newEmployee.firstName} ${newEmployee.lastName}` : undefined
                 }));
                 this.modal.iziModal('close');
-              }, () => {});
-          }, () => {})
-          .catch(error => $log.error(error));
+              }, () => {})
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
+          }, () => {});
         };
 
 
@@ -396,9 +402,9 @@ angular.
               .then(() => {
                 this.mapcanvas.removeSeat(seat);
                 this.modal.iziModal('close');
-              }, () => {});
-          }, () => {})
-          .catch(error => $log.error(error));
+              }, () => {})
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
+          }, () => {});
         };
 
 
@@ -416,9 +422,9 @@ angular.
                 this.mapcanvas.updateSeat(this.seat.id, Object.assign({}, this.seat, {
                   tooltipTitle: undefined
                 }));
-              }, () => {});
-          }, () => {})
-          .catch(error => $log.error(error));
+              }, () => {})
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
+          }, () => {});
         };
 
 
@@ -442,7 +448,7 @@ angular.
           let valid = true;
           let seatID = this.modal.find('input[name="seatID"]').val();
           if (seatID == this.seat.id) return valid;
-          valid = Floor(floorID).getSeats().find(seat => seat.id == seatID) == undefined;
+          valid = this.seats ? this.seats.find(seat => seat.id == seatID) == undefined : true;
           if (!valid) {
             this.addNotification({
               status: 'ERROR',
@@ -629,21 +635,23 @@ angular.
             })
             .then(() => {
               if (seatID.length) {
-                $scope.$apply(() => {
-                  Floor(floorID).attachEmployeeToSeat(seatID, this.employee.id);
-                });
-                this.mapcanvas.setSeatTooltipTitle(seatID, `${this.employee.firstName} ${this.employee.lastName}`);
-                this.mapcanvas.activateOneSeat({id: seatID});
+                Floor(floorID).attachEmployeeToSeat(seatID, this.employee.id)
+                  .then(() => {
+                    this.mapcanvas.setSeatTooltipTitle(seatID, `${this.employee.firstName} ${this.employee.lastName}`);
+                    this.mapcanvas.activateOneSeat({id: seatID});
+                    this.modal.iziModal('close');
+                  }, () => {})
+                  .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
               } else {
-                $scope.$apply(() => {
-                  Floor(floorID).attachEmployeeToSeat(this.employee.seatID, undefined);
-                });
-                this.mapcanvas.setSeatTooltipTitle(this.employee.seatID, undefined);
-                this.mapcanvas.deactivateAllSeats();
+                Floor(floorID).attachEmployeeToSeat(this.employee.seatID, undefined)
+                  .then(() => {
+                    this.mapcanvas.setSeatTooltipTitle(this.employee.seatID, undefined);
+                    this.mapcanvas.deactivateAllSeats();
+                    this.modal.iziModal('close');
+                  }, () => {})
+                  .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
               }
-              this.modal.iziModal('close');
-            }, () => {})
-            .catch(error => $log.error(error));
+            }, () => {});
           });
         };
 
@@ -659,7 +667,8 @@ angular.
               }
               this.pasteEmployeeSeatBlock();
               this.mapcanvas.activateOneSeat(this.employee.seat);
-            }, () => {});
+            }, () => {})
+            .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
         };
 
 
@@ -716,8 +725,12 @@ angular.
                 seat.id.toLowerCase().indexOf(query) != -1 ||
                 (seat.title && seat.title.toLowerCase().indexOf(query) != -1)
               )
-              .map(seat => `<li data-id="${seat.id}">${seat.title || seat.id}</li>`)
-              .sort();
+              .sort((a, b) => {
+                if (a.id < b.id) return -1;
+                if (a.id > b.id) return 1;
+                return 0;
+              })
+              .map(seat => `<li data-id="${seat.id}">${seat.title || seat.id}</li>`);
             form.find('.glyphicon-remove--seat').remove();
             seatList.html(query.length ? newList.join('') : '');
           });
@@ -725,7 +738,7 @@ angular.
           seatList.click(event => {
             const seat = this.getSeat(event.target.dataset.id);
             if (!seat) {
-              $log.error('- seat with such ID not found');
+              if (CONFIG.consoleErrors) $log.error('- seat with such ID not found');
               return;
             }
             seatTitleField.val(`${seat.title || seat.id}`);
@@ -774,14 +787,15 @@ angular.
             msg: questionText
           })
           .then(() => {
-            $scope.$apply(() => {
-              Floor(floorID).attachEmployeeToSeat(this.employee.seat.id, undefined);
-            });
-            this.mapcanvas.setSeatTooltipTitle(this.employee.seat.id, undefined);
-            this.employee.seat = undefined;
-            this.clearSeatsList();
-          }, () => {})
-          .catch(error => $log.error(error));
+            Floor(floorID).attachEmployeeToSeat(this.employee.seat.id, undefined)
+              .then(() => {
+                this.mapcanvas.setSeatTooltipTitle(this.employee.seat.id, undefined);
+                this.mapcanvas.deactivateAllSeats();
+                this.employee.seat = undefined;
+                this.clearSeatsList();
+              }, () => {})
+              .catch(error => { if (CONFIG.consoleErrors) $log.error(error); });
+          }, () => {});
         };
 
 

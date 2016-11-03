@@ -9,6 +9,7 @@ angular.
       function NotifierCtrl($scope, Notifications) {
         this.notifications = [];
         const modalAlertWidth = 600;
+        const closeTimeout = 5000;
         const modalHeight = 50;
         const modalAlertFrame = {
           attached: 'bottom',
@@ -23,7 +24,9 @@ angular.
           navigateCaption: false,
           overlay: false,
           transitionIn: 'fadeInUp',
-          transitionOut: 'fadeOutDown'
+          transitionOut: 'fadeOutDown',
+          timeout: closeTimeout,
+          timeoutProgressbar: true,
         };
 
 
@@ -32,12 +35,7 @@ angular.
           updatedNotifications => {
             updatedNotifications.forEach(notification => {
               if (!this.notifications.find(n => n.timestamp == notification.timestamp)) {
-                this.showNotification(Object.assign({}, notification));
-              }
-            });
-            [].concat(this.notifications).forEach(notification => {
-              if (!updatedNotifications.find(n => n.timestamp == notification.timestamp)) {
-                this.hideNotification(Object.assign({}, notification));
+                this.addNotification(Object.assign({}, notification));
               }
             });
           },
@@ -45,7 +43,7 @@ angular.
         );
 
 
-        this.showNotification = (notification) => {
+        this.addNotification = (notification) => {
           const modalAlert = window.jQuery('<div id="modal-alert"></div>');
           window.jQuery('body').append(modalAlert);
           modalAlert.css('bottom', this.notifications.length * (modalHeight+10));
@@ -76,6 +74,12 @@ angular.
                 });
               });
             },
+            onClosing: () => {
+              $scope.$apply(() => {
+                Notifications.remove(notification);
+              });
+              this.removeNotification(notification);
+            },
             onClosed: () => {
               modalAlert.iziModal('destroy');
               modalAlert.remove();
@@ -88,8 +92,7 @@ angular.
         };
 
 
-        this.hideNotification = (notification) => {
-          notification.modalAlert.iziModal('close');
+        this.removeNotification = (notification) => {
           const index = this.notifications.indexOf(
             this.notifications.find(n => n.timestamp == notification.timestamp)
           );

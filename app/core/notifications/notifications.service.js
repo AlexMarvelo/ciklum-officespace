@@ -4,10 +4,9 @@ const notificationCodes = require('../../../share/config/notifications.json');
 
 angular.
   module('core.notifications').
-  factory('Notifications', ['$timeout', '$log',
-    function($timeout, $log) {
+  factory('Notifications', ['$log',
+    function($log) {
       // types: success, info, warning, danger
-      const timeout = 4000;
       const codes = notificationCodes;
       const ignored = ['success'];
 
@@ -24,9 +23,7 @@ angular.
           notification.timestamp = (new Date()).toISOString();
           this.notifications.push(notification);
           this.notificationsLog.push(notification);
-          $timeout(() => remove(notification), timeout);
-          $log.debug('- add custom notification:');
-          $log.debug(notification);
+          $log.debug('- add custom notification');
           return;
         }
         let newNotification;
@@ -143,7 +140,6 @@ angular.
         this.notifications.push(newNotification);
         this.notificationsLog.push(newNotification);
         $log.debug(`- add notification ${!notification ? '(code ' + code + ', timestamp ' + newNotification.timestamp + ')' : ':'}`);
-        $timeout(() => remove(newNotification), timeout);
       };
 
 

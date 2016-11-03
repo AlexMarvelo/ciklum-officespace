@@ -6,14 +6,11 @@ angular.
     controller: ['$scope', '$stateParams', 'Floor',
       function FloorCtrl($scope, $stateParams, Floor) {
         const floorID = $stateParams.floorID;
-        this.$onInit = () => {
-          Floor(floorID).getConfig()
-            .then(config => {
-              $scope.$apply(() => {
-                this.config = config;
-              });
-            }, () => {});
-        };
+        $scope.$watch(
+          Floor(floorID).returnConfig,
+          config => this.config = config,
+          true
+        );
       }
     ],
 

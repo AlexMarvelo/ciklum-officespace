@@ -47,10 +47,13 @@ angular
       }])
 
     .controller('CiklumSpace.Controller', [
-      'User',
-      function(User) {
+      'User', 'Employees', 'Floor',
+      function(User, Employees, Floor) {
         this.$onInit = () => {
           User.init();
+          Employees.load();
+          Floor().getAllConfigs(true)
+            .catch(() => {});
         };
       }])
 

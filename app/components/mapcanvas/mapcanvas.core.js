@@ -10,6 +10,7 @@ class Mapcanvas {
     this.User = modules.User;
     this.Floor = modules.Floor;
     this.Employees = modules.Employees;
+    this.CONFIG = modules.CONFIG;
 
     this.floorID = floorID;
     this.seats = [];
@@ -132,7 +133,7 @@ class Mapcanvas {
     let targetSeat = this.seats.find(s => s.id == seatID);
     if (!targetSeat) {
       this.Notifications.add(this.Notifications.codes.seatNotFound);
-      this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
+      if (this.CONFIG.consoleErrors) this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
       return;
     }
     this.setSeatTooltipTitle(targetSeat.id, seat.tooltipTitle);
@@ -145,7 +146,7 @@ class Mapcanvas {
     const targetSeat = this.seats.find(s => s.id == seat.id);
     if (!targetSeat) {
       this.Notifications.add(this.Notifications.codes.seatNotFound);
-      this.$log.error(`- ${seat.id} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
+      if (this.CONFIG.consoleErrors) this.$log.error(`- ${seat.id} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
       return;
     }
     targetSeat.remove();
@@ -198,7 +199,7 @@ class Mapcanvas {
     const targetSeat = this.seats.find(seat => seat.id == seatID);
     if (!targetSeat) {
       this.Notifications.add(this.Notifications.codes.seatNotFound);
-      this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
+      if (this.CONFIG.consoleErrors) this.$log.error(`- ${seatID} seat wasn\'t found on mapcanvas of ${this.floorID} floor`);
       return;
     }
     targetSeat.setTooltipTitle(title);
@@ -208,7 +209,7 @@ class Mapcanvas {
   unattachEmployeeFromSeat(employee) {
     if (!employee.id) {
       this.Notifications.add(this.Notifications.codes.idRequired);
-      this.$log.error('- employee id is required for this action');
+      if (this.CONFIG.consoleErrors) this.$log.error('- employee id is required for this action');
       return;
     }
     const targetSeat = this.seats.find(seat => seat.employeeID == employee.id);
