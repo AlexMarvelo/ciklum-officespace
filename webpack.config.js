@@ -1,4 +1,4 @@
-var PRODUCTION = false;
+var PRODUCTION = true;
 
 var webpack = require('webpack');
 var path = require('path');

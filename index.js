@@ -12,7 +12,7 @@ const dbConfig = require('./db/db.config.json');
 const flash = require('connect-flash');
 
 const app = express();
-app.set('env', 'development');
+app.set('env', 'production');
 
 require('./db/db')(app);
 
@@ -23,9 +23,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.use(express.static(path.join(__dirname, 'public')));
-if (app.get('env') != 'production') {
-  app.use(logger('dev'));
-}
+app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
