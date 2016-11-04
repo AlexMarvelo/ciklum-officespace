@@ -33,7 +33,7 @@ The aim of the application is to help with searching of an exact employee in mul
 
 ---
 
-##### List of used technologies:
+##### List of used technologies
 - express
 - mongodb (with mongoose)
 - passport.js
