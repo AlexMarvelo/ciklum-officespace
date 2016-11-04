@@ -8,7 +8,7 @@ angular.
     function($log) {
       // types: success, info, warning, danger
       const codes = notificationCodes;
-      const ignored = [];
+      const ignored = ['success'];
 
       this.notifications = [];
       this.notificationsLog = [];
