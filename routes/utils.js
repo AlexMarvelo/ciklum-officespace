@@ -9,9 +9,10 @@ const notificationCodes = require('../share/config/notifications.json');
 
 
 
-utils.renderApp = (res) => {
+utils.renderApp = (res, env) => {
   let props = {
-    pageTitle: 'Ciklum OfficeSpace'
+    pageTitle: 'Ciklum OfficeSpace',
+    env,
   };
   res.render('index', props);
 };

@@ -1,5 +1,7 @@
 'use strict';
 
+const ENV = require('../ENV.json').env;
+
 angular
   .module('CiklumSpace')
     .config([
@@ -71,7 +73,7 @@ angular
       }])
 
     .constant('CONFIG', {
-      'env': 'development',
+      'env': ENV,
       'consoleErrors': true,
       'appDomain_local': 'http://localhost:3000',
       'appDomain_remote': 'http://ciklumspace.herokuapp.com',

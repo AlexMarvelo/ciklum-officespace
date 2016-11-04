@@ -1,5 +1,4 @@
-- var production = false
-- var min = production ? '.min' : ''
+- var min = env == 'production' || env == 'local' ? '.min' : ''
 doctype html
 html(lang='en')
   head
