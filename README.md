@@ -3,9 +3,9 @@ Final project for Ciklum JS Internship
 
 This is a full-stack application based on [MEAN stack](http://mean.io/).
 
-The application is deployed with Heroku [here](http://ciklumspace.herokuapp.com). Database is deployed using [mLab](https://mlab.com).
+The application is deployed with Heroku: [ciklumspace.herokuapp.com](http://ciklumspace.herokuapp.com). Database is deployed using [mLab](https://mlab.com).
 
-The aim of the application is to help with searching of a exact employee in multi-floor office.
+The aim of the application is to help with searching of an exact employee in multi-floor office.
 
 ---
 
@@ -38,7 +38,7 @@ The aim of the application is to help with searching of a exact employee in mult
 - mongodb (with mongoose)
 - passport.js
 - ES6 (with Babel)
-- Angular
+- Angular 1.5
 - jQuery
 - webpack
 - jade
