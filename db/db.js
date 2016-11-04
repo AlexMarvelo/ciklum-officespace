@@ -9,7 +9,7 @@ const initData = require('./db.initData.json');
 
 module.exports = (app) => {
   if (app) {
-    const dbURL = app.get('env') == 'production' ? dbConfig.url_remote : dbConfig.url_local;
+    const dbURL = app.get('env') == 'production' || app.get('env') == 'local' ? dbConfig.url_remote : dbConfig.url_local;
     console.log(`- Connecting to ${dbURL}`);
     mongoose.connect(dbURL, dbConfig.options);
 
