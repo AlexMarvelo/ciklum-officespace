@@ -1,1 +1,1 @@
-web: npm run start-server-watch
+web: npm run start-server
