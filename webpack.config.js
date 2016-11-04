@@ -1,4 +1,5 @@
-var PRODUCTION = true;
+var ENV = require('./ENV.json').env;
+var PRODUCTION = ENV == 'production' || ENV == 'local';
 
 var webpack = require('webpack');
 var path = require('path');

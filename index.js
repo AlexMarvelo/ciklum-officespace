@@ -10,9 +10,10 @@ const session = require('express-session');
 const MongoStore  = require('connect-mongo')(session);
 const dbConfig = require('./db/db.config.json');
 const flash = require('connect-flash');
+const ENV = require('./ENV.json').env;
 
 const app = express();
-app.set('env', 'production');
+app.set('env', ENV);
 
 require('./db/db')(app);
 
