@@ -121,17 +121,7 @@ angular.
       // ---------------
 
 
-      this.getActiveSeat = () => {
-        const floorID = this.floorID;
-        try {
-          if (!floorID) {
-            throw { status: Notifications.codes.floorIDRequired };
-          }
-          return this.activeSeat;
-        } catch (error) {
-          Notifications.add(error);
-        }
-      };
+      this.getActiveSeat = () => this.activeSeat;
 
 
       this.setActiveSeat = (activeSeat) => {
@@ -141,10 +131,10 @@ angular.
             throw { status: Notifications.codes.floorIDRequired };
           }
           if (!activeSeat) {
-            if (this.activeSeat) $log.debug(`- unset active seat on ${floorID} floor`);
+            // TODO why $log.debug doesn't work here
+            // if (this.activeSeat) $log.debug(`- unset active seat on ${floorID} floor`);
+            if (this.activeSeat) console.log(`- unset active seat on ${floorID} floor`);
             this.activeSeat = undefined;
-            console.log('- new active seat:');
-            console.log(this.activeSeat);
             return;
           }
           if (activeSeat.id == undefined) {
@@ -155,9 +145,9 @@ angular.
             throw { status: Notifications.codes.seatNotFound };
           }
           this.activeSeat = targetSeat;
-          console.log('- new active seat:');
-          console.log(this.activeSeat);
-          $log.debug(`- set active seat to ${this.activeSeat.id} on ${floorID} floor`);
+          // TODO why $log.debug doesn't work here
+          // $log.debug(`- set active seat to ${this.activeSeat.id} on ${floorID} floor`);
+          console.log(`- set active seat to ${this.activeSeat.id} on ${floorID} floor`);
         } catch (error) {
           Notifications.add(error);
         }
@@ -590,7 +580,7 @@ angular.
             let floors = Object.assign({}, this.floors);
             let configList = [];
             response.configs.forEach(config => {
-              floors[config.id] = floors[config.id] || Object.assign({}, initFloorState);
+              floors[config.id] = floors[config.id] || {};
               configList.push(config);
             });
             this.floors = floors;
