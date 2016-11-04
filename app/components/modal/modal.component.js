@@ -57,7 +57,7 @@ angular.
         });
         const seatEditModal = Object.assign({}, modalFrame, {
           title: 'Update seat',
-          subtitle: 'Seat ID must be unique on the floor',
+          subtitle: 'Seat ID must be unique',
         });
         const employeeDetailsModal = Object.assign({}, modalFrame, {
           title: 'Employee details',
