@@ -35,22 +35,19 @@ angular.
               if (CONFIG.consoleErrors) $log.error('SVG not supported');
               return;
             }
-            const img = document.getElementById('mapcanvas-map');
-            img.addEventListener('load', () => {
+            const img = window.jQuery('<img class="mapcanvas-map" id="mapcanvas-map" alt="Map is loading" />');
+            img.on('load', () => {
               $scope.$apply(() => {
-                this.initMapcanvas(img);
+                this.mapcanvas.drawMapCanvas('mapcanvas', img.width(), img.height());
+                this.mapcanvas.ready = true;
+                this.mapcanvas.setSeats(this.seats);
+                this.initialized = true;
               });
-            });
+            })
+            .attr('src', this.config.mapSource)
+            .appendTo(window.jQuery('#mapcanvas-container'));
           }
         );
-
-
-        this.initMapcanvas = (img) => {
-          this.mapcanvas.drawMapCanvas('mapcanvas', img.width, img.height);
-          this.mapcanvas.ready = true;
-          this.mapcanvas.setSeats(this.seats);
-          this.initialized = true;
-        };
       }
     ],
 
@@ -64,7 +61,6 @@ angular.
         <div class="row">
           <div class="col-lg-10 col-lg-push-1 mapcanvas-frame">
             <div class="mapcanvas-container" id="mapcanvas-container" style="width: {{$ctrl.config.width ? $ctrl.config.width + 'px' : '100%'}}">
-              <img ng-src="{{$ctrl.config.mapSource}}" class="mapcanvas-map" id="mapcanvas-map" alt="Map is loading">
               <div class="mapcanvas" id="mapcanvas"></div>
             </div>
           </div>
