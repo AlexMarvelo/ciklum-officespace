@@ -34,15 +34,16 @@ The aim of the application is to help with searching of an exact employee in mul
 ---
 
 ##### List of used technologies
+- ES6 (with Babel)
 - express
 - mongodb (with mongoose)
 - passport.js
-- ES6 (with Babel)
 - Angular 1.5
 - jQuery
-- webpack
+- Bootstrap
 - jade
 - sass
+- webpack
 
 ---
 
