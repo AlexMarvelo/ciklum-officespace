@@ -376,7 +376,7 @@ angular.
           }
           const newEmployee = this.getEmployee(newSeat.employeeID);
           confirm({
-            msg: `Are you sure to update ${this.seat.title || this.seat.id} seat with new values?`
+            msg: `Are you sure to update ${this.seat.title || 'this'} seat with new values?`
           })
           .then(() => {
             Floor(floorID).updateSeat(this.seat.id, newSeat)
@@ -482,12 +482,6 @@ angular.
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-xs-4 control-label col-thinpad-right">Seat ID</label>
-                <div class="col-xs-8 col-thinpad-left">
-                  <p class="modal-input-value">${this.seat.id}</p>
-                </div>
-              </div>
-              <div class="form-group">
                 <label class="col-xs-4 control-label col-thinpad-right">Occupant</label>
                 <div class="col-xs-8 col-thinpad-left">
                   <p class="modal-input-value">${hasEmployee && employee ? employee.firstName + ' ' + employee.lastName : '<i>free</i>'}</p>
@@ -516,11 +510,11 @@ angular.
                     id="inputSeat1">
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group hidden">
                 <label for="inputSeat2" class="col-xs-4 control-label col-thinpad-right">Seat ID</label>
                 <div class="col-xs-8 col-thinpad-left">
                   <input
-                    type="text"
+                    type="hidden"
                     name="seatID"
                     class="form-control modal-form-control"
                     value="${this.seat.id}"
